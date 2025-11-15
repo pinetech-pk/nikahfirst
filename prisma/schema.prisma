@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"  // Will change to "postgresql" in production
+  url      = env("DATABASE_URL")
+}
+
+// ==================== AUTH & USERS ====================
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  phone         String?   @unique
+  password      String
+  name          String?   // Added later, but needed as contact person
+  isVerified    Boolean   @default(false)
+  emailVerified Boolean   @default(false)
+  phoneVerified Boolean   @default(false)
+  role          UserRole  @default(USER)
+  status        UserStatus @default(ACTIVE)
+  
+  // Subscription & Credits
+  subscription  SubscriptionTier @default(FREE)
+  subscriptionExpiry DateTime?
+  
+  // Relationships
+  profiles      Profile[]  // Can manage multiple profiles
+  redeemWallet  RedeemWallet?
+  fundingWallet FundingWallet?
+  transactions  Transaction[]
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+}
+
+// ==================== PROFILES (MATRIMONIAL) ====================
+model Profile {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  // Profile Ownership
+  profileFor    ProfileFor  // SELF, SON, DAUGHTER, BROTHER, SISTER, etc.
+  
+  // Basic Info (Required)
+  firstName     String
+  lastName      String?
+  gender        Gender
+  dateOfBirth   DateTime
+  
+  // Additional Info (Added progressively)
+  bio           String?
+  education     String?
+  profession    String?
+  city          String?
+  country       String?
+  height        String?
+  maritalStatus MaritalStatus?
+  religion      String    @default("Islam")
+  sect          String?
+  caste         String?
+  motherTongue  String?
+  
+  // Preferences
+  minAge        Int?
+  maxAge        Int?
+  preferredCities String?
+  
+  // Privacy & Visibility
+  isActive      Boolean   @default(true)
+  isPublished   Boolean   @default(false) // Complete enough to show
+  visibility    ProfileVisibility @default(VISIBLE)
+  
+  // Verification
+  isVerified    Boolean   @default(false)
+  verificationLevel Int  @default(0) // 0-5 levels
+  
+  // Stats
+  profileViews  Int       @default(0)
+  lastActiveAt  DateTime  @default(now())
+  
+  // Relationships
+  photos        Photo[]
+  sentConnections     Connection[] @relation("SentConnections")
+  receivedConnections Connection[] @relation("ReceivedConnections")
+  
+  // Timestamps
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ==================== PHOTOS ====================
+model Photo {
+  id          String    @id @default(cuid())
+  profileId   String
+  profile     Profile   @relation(fields: [profileId], references: [id])
+  url         String
+  isMain      Boolean   @default(false)
+  isPublic    Boolean   @default(true)
+  isVerified  Boolean   @default(false)
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+// ==================== CONNECTIONS ====================
+model Connection {
+  id          String    @id @default(cuid())
+  
+  senderId    String
+  sender      Profile   @relation("SentConnections", fields: [senderId], references: [id])
+  
+  receiverId  String
+  receiver    Profile   @relation("ReceivedConnections", fields: [receiverId], references: [id])
+  
+  status      ConnectionStatus @default(PENDING)
+  message     String?
+  
+  // Track credit usage
+  creditsUsed Int       @default(1)
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+  
+  @@unique([senderId, receiverId])
+}
+
+// ==================== WALLETS ====================
+model RedeemWallet {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  balance       Int       @default(0)
+  limit         Int       // Based on subscription tier
+  lastRedeemed  DateTime  @default(now())
+  nextRedemption DateTime
+  creditsWasted Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model FundingWallet {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  balance       Int       @default(0)
+  totalPurchased Int      @default(0)
+  totalSpent    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// ==================== TRANSACTIONS ====================
+model Transaction {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  
+  type          TransactionType
+  walletType    WalletType
+  amount        Int
+  description   String
+  
+  // For purchases
+  paymentMethod String?
+  paymentId     String?
+  
+  createdAt     DateTime  @default(now())
+}
+
+// ==================== ENUMS ====================
+enum UserRole {
+  USER
+  CONSULTANT
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum SubscriptionTier {
+  FREE
+  STANDARD
+  SILVER
+  GOLD
+  PLATINUM
+  PRO
+}
+
+enum ProfileFor {
+  SELF
+  SON
+  DAUGHTER
+  BROTHER
+  SISTER
+  RELATIVE
+  CLIENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum MaritalStatus {
+  NEVER_MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+}
+
+enum ProfileVisibility {
+  VISIBLE
+  HIDDEN
+  PRIVATE
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  BLOCKED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  PURCHASE
+  REDEMPTION
+  REFUND
+  BONUS
+}
+
+enum WalletType {
+  REDEEM
+  FUNDING
+}
