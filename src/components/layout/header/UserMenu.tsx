@@ -3,6 +3,8 @@
 import { User, Settings, CreditCard, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
+import Link from "next/link";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,10 +39,12 @@ export function UserMenu() {
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            Dashboard
-          </DropdownMenuItem>
+          <Link href="/dashboard">
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              Dashboard
+            </DropdownMenuItem>
+          </Link>
           <DropdownMenuItem>
             <CreditCard className="mr-2 h-4 w-4" />
             Manage Credits
