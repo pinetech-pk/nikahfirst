@@ -2,6 +2,7 @@
 
 import { User, Settings, CreditCard, LogOut, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +13,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export function UserMenu() {
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/" });
+  };
+
   return (
     <div className="flex items-center gap-2">
       {/* Notifications */}
@@ -45,7 +50,10 @@ export function UserMenu() {
             Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-red-600">
+          <DropdownMenuItem
+            className="text-red-600 cursor-pointer"
+            onClick={handleLogout}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </DropdownMenuItem>
