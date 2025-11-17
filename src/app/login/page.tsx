@@ -15,6 +15,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import { isAdmin } from "@/lib/permissions";
+import { UserRole } from "@prisma/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -42,14 +44,30 @@ export default function LoginPage() {
         const response = await fetch("/api/auth/session");
         const session = await response.json();
 
-        // Redirect based on role
-        if (session?.user?.role && session.user.role !== "USER") {
+        // 🔍 DEBUG LOGGING
+        console.log("=== LOGIN DEBUG ===");
+        console.log("1. Full session:", JSON.stringify(session, null, 2));
+        console.log("2. User object:", session?.user);
+        console.log("3. Role value:", session?.user?.role);
+        console.log("4. Role type:", typeof session?.user?.role);
+
+        const userRole = session?.user?.role as UserRole | undefined;
+        console.log("5. userRole variable:", userRole);
+
+        const adminCheck = isAdmin(userRole);
+        console.log("6. isAdmin() result:", adminCheck);
+        console.log("==================");
+
+        if (adminCheck) {
+          console.log("✅ Redirecting to /admin");
           router.push("/admin");
         } else {
+          console.log("❌ Redirecting to /dashboard");
           router.push("/dashboard");
         }
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError("Something went wrong");
     } finally {
       setLoading(false);

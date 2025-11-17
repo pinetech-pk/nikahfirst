@@ -12,13 +12,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { isModerator } from "@/lib/permissions";
+import { UserRole } from "@prisma/client";
 
 export default async function PendingProfilesPage() {
   const session = await getServerSession(authOptions);
 
   // Check if user is moderator or higher
-  const allowedRoles = ["MODERATOR", "ADMIN", "SUPER_ADMIN"];
-  if (!session || !allowedRoles.includes(session.user.role as string)) {
+  const userRole = session?.user?.role as UserRole;
+  if (!session || !isModerator(userRole)) {
     redirect("/dashboard");
   }
 

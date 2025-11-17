@@ -12,14 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { isAdmin, isSupervisor } from "@/lib/permissions";
+import { UserRole } from "@prisma/client";
 
 export default async function AdminUsersPage() {
   const session = await getServerSession(authOptions);
 
-  if (
-    !session ||
-    !["ADMIN", "SUPER_ADMIN"].includes(session.user.role as string)
-  ) {
+  // ✅ FIX: Use isAdmin() helper
+  const userRole = session?.user?.role as UserRole;
+  if (!session || !isAdmin(userRole)) {
     redirect("/dashboard");
   }
 
@@ -32,25 +33,15 @@ export default async function AdminUsersPage() {
     switch (role) {
       case "SUPER_ADMIN":
         return "destructive";
-      case "ADMIN":
+      case "SUPERVISOR":
         return "default";
-      case "MODERATOR":
+      case "CONTENT_EDITOR":
         return "secondary";
-      case "CONSULTANT":
+      case "SUPPORT_AGENT":
         return "outline";
       default:
         return "outline";
     }
-  };
-
-  const canCreateRole = (creatorRole: string, targetRole: string): boolean => {
-    if (creatorRole === "SUPER_ADMIN") {
-      return ["ADMIN"].includes(targetRole);
-    }
-    if (creatorRole === "ADMIN") {
-      return ["MODERATOR", "SUPPORT_AGENT"].includes(targetRole);
-    }
-    return false;
   };
 
   return (
@@ -62,9 +53,9 @@ export default async function AdminUsersPage() {
             <Button>Create Admin</Button>
           </Link>
         )}
-        {session.user.role === "ADMIN" && (
-          <Link href="/admin/users/create-moderator">
-            <Button>Create Moderator</Button>
+        {session.user.role === "SUPERVISOR" && (
+          <Link href="/admin/users/create-admin">
+            <Button>Create Admin</Button>
           </Link>
         )}
       </div>

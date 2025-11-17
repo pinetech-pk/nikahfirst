@@ -45,11 +45,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // IMPORTANT: Return the role here
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role,
+          role: user.role, // ← Make sure this is included
         };
       },
     }),
@@ -62,18 +63,20 @@ export const authOptions: NextAuthOptions = {
       return url.startsWith(baseUrl) ? url : baseUrl;
     },
     async session({ token, session }) {
+      // CRITICAL: Pass role from token to session
       if (token) {
         session.user.id = token.id as string;
         session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.role = token.role;
+        session.user.email = token.email as string;
+        session.user.role = token.role as any; // ← This line is CRITICAL
       }
       return session;
     },
     async jwt({ token, user }) {
+      // CRITICAL: Store role in JWT token
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role; // ← This line is CRITICAL
       }
       return token;
     },

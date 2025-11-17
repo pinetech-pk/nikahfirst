@@ -12,6 +12,8 @@ import {
 import { Users, UserCheck, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { isAdmin } from "@/lib/permissions";
+import { UserRole } from "@prisma/client";
 
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
@@ -20,9 +22,9 @@ export default async function AdminDashboard() {
     redirect("/login");
   }
 
-  // Check admin role
-  const adminRoles = ["MODERATOR", "ADMIN", "SUPER_ADMIN"];
-  if (!adminRoles.includes(session.user.role as string)) {
+  // ✅ FIX: Use isAdmin() helper instead of hardcoded array
+  const userRole = session.user.role as UserRole;
+  if (!isAdmin(userRole)) {
     redirect("/dashboard");
   }
 

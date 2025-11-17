@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProfileModerationForm } from "@/components/admin/ProfileModerationForm";
+import { isModerator } from "@/lib/permissions";
+import { UserRole } from "@prisma/client";
 
 export default async function ProfileReviewPage({
   params,
@@ -19,8 +21,9 @@ export default async function ProfileReviewPage({
 }) {
   const session = await getServerSession(authOptions);
 
-  const allowedRoles = ["MODERATOR", "ADMIN", "SUPER_ADMIN"];
-  if (!session || !allowedRoles.includes(session.user.role as string)) {
+  // Check if user is moderator or higher
+  const userRole = session?.user?.role as UserRole;
+  if (!session || !isModerator(userRole)) {
     redirect("/dashboard");
   }
 
