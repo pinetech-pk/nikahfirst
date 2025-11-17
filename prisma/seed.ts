@@ -24,6 +24,7 @@ async function main() {
         redeemWallet: {
           create: {
             balance: 100,
+            frozenBalance: 0, // NEW FIELD
             limit: 100,
             nextRedemption: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           },
@@ -31,6 +32,7 @@ async function main() {
         fundingWallet: {
           create: {
             balance: 1000,
+            frozenBalance: 0, // NEW FIELD
           },
         },
       },
@@ -41,13 +43,13 @@ async function main() {
     console.log("🔑 Password: SuperAdmin123!");
     console.log("⚠️  CHANGE THIS PASSWORD IMMEDIATELY!");
   } else {
-    console.log("Super Admin already exists");
+    console.log("✅ Super Admin already exists");
   }
 }
 
 main()
   .catch((e) => {
-    console.error(e);
+    console.error("❌ Seed error:", e);
     process.exit(1);
   })
   .finally(async () => {

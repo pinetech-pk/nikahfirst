@@ -34,7 +34,6 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
-  deletedAt     DateTime? // Soft delete
 }
 
 // ==================== PROFILES (MATRIMONIAL) ====================
@@ -136,7 +135,6 @@ model RedeemWallet {
   userId        String    @unique
   user          User      @relation(fields: [userId], references: [id])
   balance       Int       @default(0)
-  frozenBalance Int       @default(0) // Credits frozen due to ban/suspension
   limit         Int       // Based on subscription tier
   lastRedeemed  DateTime  @default(now())
   nextRedemption DateTime
@@ -150,7 +148,6 @@ model FundingWallet {
   userId        String    @unique
   user          User      @relation(fields: [userId], references: [id])
   balance       Int       @default(0)
-  frozenBalance Int       @default(0) // Credits frozen due to ban/suspension
   totalPurchased Int      @default(0)
   totalSpent    Int       @default(0)
   createdAt     DateTime  @default(now())
@@ -177,19 +174,18 @@ model Transaction {
 
 // ==================== ENUMS ====================
 enum UserRole {
-  USER              // Regular users (members)
-  SUPPORT_AGENT     // Tier 1: Customer service (handle complaints, mark refunds)
-  CONTENT_EDITOR    // Tier 2: Content moderation (approve/reject profiles, edit data)
-  CONSULTANT        // Tier 2: Matchmaking services (not in MVP)
-  SUPERVISOR        // Tier 3: Senior moderator (create lower admins, ban users, upgrade premium)
-  SUPER_ADMIN       // Tier 4: Full system control (analytics, global settings)
+  USER
+  CONSULTANT
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
 }
 
 enum UserStatus {
-  ACTIVE      // Normal active user
-  INACTIVE    // User deactivated their own account
-  SUSPENDED   // Temporarily suspended by admin (can be reactivated)
-  BANNED      // Permanently banned by admin
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
 }
 
 enum SubscriptionTier {
