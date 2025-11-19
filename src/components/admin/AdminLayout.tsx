@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ import {
   Mail,
   ChevronDown,
   BarChart3,
+  LogOut,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -95,6 +97,14 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+
+  // Handle logout
+  const handleLogout = () => {
+    signOut({
+      callbackUrl: "/login",
+      redirect: true,
+    });
+  };
 
   // Get dynamic breadcrumb
   const breadcrumb = useMemo(() => {
@@ -361,7 +371,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <DropdownMenuItem>Change Password</DropdownMenuItem>
                   <DropdownMenuItem>Preferences</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem
+                    className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
