@@ -19,20 +19,40 @@
     └── 📁scripts
         ├── create-test-admins.ts
         ├── create-test-user.ts
+        ├── seed-test-profiles.ts
         ├── test-permissions.ts
     └── 📁src
         └── 📁app
-            └── 📁admin
-                └── 📁profiles
-                    └── 📁[id]
-                        └── 📁review
+            └── 📁(admin)
+                └── 📁admin
+                    └── 📁profiles
+                        └── 📁[id]
+                            └── 📁review
+                                ├── page.tsx
+                        └── 📁pending
                             ├── page.tsx
-                    └── 📁pending
-                        ├── page.tsx
-                └── 📁users
-                    └── 📁create-admin
+                    └── 📁users
+                        └── 📁admins
+                            ├── page.tsx
+                        └── 📁create-admin
+                            ├── page.tsx
+                        └── 📁regular
+                            ├── page.tsx
                         ├── page.tsx
                     ├── page.tsx
+                ├── layout.tsx
+            └── 📁(auth)
+                └── 📁login
+                    ├── page.tsx
+                └── 📁register
+                    ├── page.tsx
+                ├── layout.tsx
+            └── 📁(dashboard)
+                └── 📁dashboard
+                    ├── page.tsx
+                ├── layout.tsx
+            └── 📁(public)
+                ├── layout.tsx
                 ├── page.tsx
             └── 📁api
                 └── 📁admin
@@ -49,22 +69,18 @@
                         ├── route.ts
                 └── 📁profile
                     ├── route.ts
-            └── 📁dashboard
-                ├── page.tsx
-            └── 📁login
-                ├── page.tsx
             └── 📁profile
                 └── 📁create
                     ├── page.tsx
-            └── 📁register
-                ├── page.tsx
             ├── favicon.ico
             ├── globals.css
             ├── layout.tsx
-            ├── page.tsx
         └── 📁components
             └── 📁admin
+                ├── AdminLayout.tsx
                 ├── ProfileModerationForm.tsx
+            └── 📁dashboard
+                ├── DashboardLayout.tsx
             └── 📁layout
                 └── 📁footer
                     ├── Footer.tsx
@@ -111,5 +127,7 @@
     ├── prisma.config.ts
     ├── README.md
     ├── ROLE_HIERARCHY_REFERENCE.md
+    ├── Structure17-11.md
+    ├── Structure18-11.md
     └── tsconfig.json
 ```

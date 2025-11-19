@@ -1,0 +1,435 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  LayoutDashboard,
+  User,
+  Heart,
+  MessageSquare,
+  Bell,
+  Settings,
+  CreditCard,
+  Shield,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  Star,
+  UserCheck,
+  Clock,
+  ChevronDown,
+  Sparkles,
+  Gift,
+  HelpCircle,
+  FileText,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
+  const navigation = [
+    {
+      title: "Main",
+      items: [
+        {
+          name: "Dashboard",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          badge: null,
+        },
+        {
+          name: "Browse Profiles",
+          href: "/dashboard/browse",
+          icon: Search,
+          badge: "New",
+          badgeColor: "default",
+        },
+      ],
+    },
+    {
+      title: "My Profile",
+      items: [
+        {
+          name: "View Profile",
+          href: "/dashboard/profile",
+          icon: User,
+          badge: null,
+        },
+        {
+          name: "Edit Profile",
+          href: "/dashboard/profile/edit",
+          icon: FileText,
+          badge: null,
+        },
+        {
+          name: "Verification",
+          href: "/dashboard/verification",
+          icon: Shield,
+          badge: "Required",
+          badgeColor: "destructive",
+        },
+      ],
+    },
+    {
+      title: "Connections",
+      items: [
+        {
+          name: "Interests Sent",
+          href: "/dashboard/interests/sent",
+          icon: Heart,
+          badge: "5",
+          badgeColor: "default",
+        },
+        {
+          name: "Interests Received",
+          href: "/dashboard/interests/received",
+          icon: UserCheck,
+          badge: "12",
+          badgeColor: "destructive",
+        },
+        {
+          name: "Matches",
+          href: "/dashboard/matches",
+          icon: Star,
+          badge: null,
+        },
+        {
+          name: "Messages",
+          href: "/dashboard/messages",
+          icon: MessageSquare,
+          badge: "3",
+          badgeColor: "destructive",
+        },
+      ],
+    },
+    {
+      title: "Activity",
+      items: [
+        {
+          name: "Profile Visitors",
+          href: "/dashboard/visitors",
+          icon: Clock,
+          badge: "24",
+          badgeColor: "secondary",
+        },
+        {
+          name: "Saved Profiles",
+          href: "/dashboard/saved",
+          icon: Heart,
+          badge: null,
+        },
+      ],
+    },
+    {
+      title: "Account",
+      items: [
+        {
+          name: "Subscription",
+          href: "/dashboard/subscription",
+          icon: Sparkles,
+          badge: "Premium",
+          badgeColor: "default",
+        },
+        {
+          name: "Billing",
+          href: "/dashboard/billing",
+          icon: CreditCard,
+          badge: null,
+        },
+        {
+          name: "Settings",
+          href: "/dashboard/settings",
+          icon: Settings,
+          badge: null,
+        },
+      ],
+    },
+    {
+      title: "Help & Support",
+      items: [
+        {
+          name: "Help Center",
+          href: "/dashboard/help",
+          icon: HelpCircle,
+          badge: null,
+        },
+        {
+          name: "Contact Support",
+          href: "/dashboard/support",
+          icon: MessageSquare,
+          badge: null,
+        },
+      ],
+    },
+  ];
+
+  return (
+    <div className="flex h-screen bg-linear-to-br from-green-50 via-white to-cyan-50">
+      {/* Mobile Sidebar Toggle */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-green-600 text-white rounded-lg shadow-lg hover:bg-green-700 transition-colors"
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        aria-label="Toggle sidebar"
+      >
+        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed lg:fixed w-64 h-full bg-linear-to-b from-green-600 to-green-700 text-white transform transition-transform duration-300 ease-in-out z-40 overflow-y-auto shadow-2xl",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}
+      >
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-green-500/30">
+          <Link href="/dashboard" className="block">
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              🕌 NikahFirst
+            </h1>
+          </Link>
+          <Badge className="mt-3 bg-green-500 text-white hover:bg-green-500 font-medium">
+            PREMIUM MEMBER
+          </Badge>
+        </div>
+
+        {/* Navigation */}
+        <nav className="py-4">
+          {navigation.map((section) => (
+            <div key={section.title} className="mb-4">
+              <h2 className="px-6 py-2 text-xs font-semibold text-green-200 uppercase tracking-wider">
+                {section.title}
+              </h2>
+              <div className="mt-1">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center px-6 py-3 text-sm font-medium transition-all relative group",
+                        isActive
+                          ? "bg-white/20 text-white border-l-4 border-white shadow-lg"
+                          : "text-green-50 hover:bg-white/10 hover:text-white"
+                      )}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <item.icon className="w-5 h-5 mr-3 shrink-0" />
+                      <span className="flex-1">{item.name}</span>
+                      {item.badge && (
+                        <Badge
+                          variant={(item.badgeColor as any) || "secondary"}
+                          className={cn(
+                            "ml-auto text-xs",
+                            item.badgeColor === "destructive" &&
+                              "bg-red-500 text-white hover:bg-red-600",
+                            item.badgeColor === "default" &&
+                              "bg-cyan-500 text-white hover:bg-cyan-600",
+                            item.badgeColor === "secondary" &&
+                              "bg-gray-700 text-white hover:bg-gray-800"
+                          )}
+                        >
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer - Upgrade CTA */}
+        <div className="p-6 border-t border-green-500/30 mt-auto">
+          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="w-5 h-5 text-yellow-300" />
+              <h3 className="font-semibold text-white">Upgrade to Premium</h3>
+            </div>
+            <p className="text-xs text-green-100 mb-3">
+              Unlock unlimited messaging and advanced features
+            </p>
+            <Button
+              size="sm"
+              className="w-full bg-yellow-500 text-gray-900 hover:bg-yellow-400 font-semibold"
+            >
+              Upgrade Now
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+        {/* Top Header */}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4">
+            {/* Breadcrumb / Page Title */}
+            <div className="flex items-center">
+              <div className="hidden md:flex items-center text-sm text-gray-600">
+                <Link
+                  href="/dashboard"
+                  className="font-semibold text-green-600 hover:text-green-700"
+                >
+                  Dashboard
+                </Link>
+                <span className="mx-2 text-gray-400">/</span>
+                <span className="text-gray-700">Overview</span>
+              </div>
+              <div className="md:hidden">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Dashboard
+                </h2>
+              </div>
+            </div>
+
+            {/* Header Actions */}
+            <div className="flex items-center gap-3">
+              {/* Upgrade Button - Desktop */}
+              <Button
+                size="sm"
+                className="hidden md:flex bg-linear-to-r from-green-600 to-cyan-600 text-white hover:from-green-700 hover:to-cyan-700"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Upgrade
+              </Button>
+
+              {/* Notifications */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-green-50"
+              >
+                <Bell className="h-5 w-5 text-gray-600" />
+                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2 hover:bg-green-50"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-green-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                      JD
+                    </div>
+                    <div className="text-left hidden md:block">
+                      <p className="text-sm font-semibold text-gray-900">
+                        John Doe
+                      </p>
+                      <p className="text-xs text-gray-500">Premium Member</p>
+                    </div>
+                    <ChevronDown className="h-4 w-4 text-gray-600" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">John Doe</p>
+                      <p className="text-xs text-gray-500">
+                        john.doe@example.com
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/profile" className="cursor-pointer">
+                      <User className="w-4 h-4 mr-2" />
+                      My Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings" className="cursor-pointer">
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/dashboard/subscription"
+                      className="cursor-pointer"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Subscription
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/help" className="cursor-pointer">
+                      <HelpCircle className="w-4 h-4 mr-2" />
+                      Help Center
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+
+        {/* Optional Footer */}
+        <footer className="bg-white border-t border-gray-200 py-4 px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2 text-sm text-gray-600">
+            <p>© 2024 NikahFirst. All rights reserved.</p>
+            <div className="flex gap-4">
+              <Link
+                href="/privacy"
+                className="hover:text-green-600 transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms"
+                className="hover:text-green-600 transition-colors"
+              >
+                Terms
+              </Link>
+              <Link
+                href="/help"
+                className="hover:text-green-600 transition-colors"
+              >
+                Help
+              </Link>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  );
+}
