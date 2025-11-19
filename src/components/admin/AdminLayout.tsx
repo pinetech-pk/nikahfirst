@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -39,14 +39,74 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Logo } from "@/components/layout/header/Logo";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
+// Breadcrumb mapping based on routes
+const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
+  "/admin": { section: "Dashboard", page: "Overview" },
+  "/admin/analytics": { section: "Dashboard", page: "Analytics" },
+  "/admin/users/regular": { section: "User Management", page: "Regular Users" },
+  "/admin/users/admins": { section: "User Management", page: "Admin Users" },
+  "/admin/users/banned": { section: "User Management", page: "Banned Users" },
+  "/admin/users/create-admin": {
+    section: "User Management",
+    page: "Create Admin",
+  },
+  "/admin/profiles/pending": {
+    section: "Profile Management",
+    page: "Pending Approval",
+  },
+  "/admin/profiles/approved": {
+    section: "Profile Management",
+    page: "Approved Profiles",
+  },
+  "/admin/profiles/rejected": {
+    section: "Profile Management",
+    page: "Rejected Profiles",
+  },
+  "/admin/profiles/verified": {
+    section: "Profile Management",
+    page: "Verified Profiles",
+  },
+  "/admin/financial/subscriptions": {
+    section: "Financial",
+    page: "Subscriptions",
+  },
+  "/admin/financial/transactions": {
+    section: "Financial",
+    page: "Transactions",
+  },
+  "/admin/financial/wallets": {
+    section: "Financial",
+    page: "Credits & Wallets",
+  },
+  "/admin/support/tickets": { section: "Support", page: "Support Tickets" },
+  "/admin/support/complaints": { section: "Support", page: "Complaints" },
+  "/admin/support/refunds": { section: "Support", page: "Refund Requests" },
+  "/admin/settings/system": { section: "Settings", page: "System Settings" },
+  "/admin/settings/permissions": { section: "Settings", page: "Permissions" },
+  "/admin/settings/audit": { section: "Settings", page: "Audit Logs" },
+};
+
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+
+  // Get dynamic breadcrumb
+  const breadcrumb = useMemo(() => {
+    // Handle dynamic routes like /admin/profiles/[id]/review
+    if (pathname.includes("/admin/profiles/") && pathname.includes("/review")) {
+      return { section: "Profile Management", page: "Review Profile" };
+    }
+
+    return (
+      BREADCRUMB_MAP[pathname] || { section: "Dashboard", page: "Overview" }
+    );
+  }, [pathname]);
 
   const navigation = [
     {
@@ -212,9 +272,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       >
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-800">
-          <h1 className="text-2xl font-bold text-green-500 flex items-center gap-2">
-            🕌 NikahFirst
-          </h1>
+          <Logo variant="dark" size="normal" href="/admin" />
           <Badge className="mt-2 bg-green-600 text-white hover:bg-green-600">
             SUPER ADMIN
           </Badge>
@@ -265,11 +323,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         {/* Top Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
           <div className="flex items-center justify-between px-6 py-4">
-            {/* Breadcrumb */}
+            {/* Dynamic Breadcrumb */}
             <div className="flex items-center text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">Dashboard</span>
+              <span className="font-semibold text-gray-900">
+                {breadcrumb.section}
+              </span>
               <span className="mx-2">/</span>
-              <span>Overview</span>
+              <span>{breadcrumb.page}</span>
             </div>
 
             {/* Header Actions */}
