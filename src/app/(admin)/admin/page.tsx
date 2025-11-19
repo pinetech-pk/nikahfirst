@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/admin/AdminLayout";
+// import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
   Card,
   CardContent,
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Page Header */}
         <div>
@@ -347,6 +347,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </AdminLayout>
+    </>
   );
 }

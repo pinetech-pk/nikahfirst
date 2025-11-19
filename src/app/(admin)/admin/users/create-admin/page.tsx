@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+// import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
   Card,
   CardContent,
@@ -120,7 +120,7 @@ export default function CreateAdminPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6 max-w-6xl">
         {/* Page Header */}
         <div>
@@ -460,6 +460,6 @@ export default function CreateAdminPage() {
           </div>
         </form>
       </div>
-    </AdminLayout>
+    </>
   );
 }

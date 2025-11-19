@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/admin/AdminLayout";
+// import { AdminLayout } from "@/components/admin/AdminLayout";
 import {
   Card,
   CardContent,
@@ -174,7 +174,7 @@ export default function PendingProfilesPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex justify-between items-center">
@@ -368,6 +368,6 @@ export default function PendingProfilesPage() {
           </Button>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 }
