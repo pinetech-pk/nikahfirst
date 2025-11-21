@@ -31,8 +31,17 @@
                                 ├── page.tsx
                         └── 📁pending
                             ├── page.tsx
+                    └── 📁settings
+                        └── 📁account
+                            ├── page.tsx
+                        └── 📁change-password
+                            ├── page.tsx
                     └── 📁users
                         └── 📁admins
+                            └── 📁[id]
+                                └── 📁edit
+                                    ├── page.tsx
+                                ├── page.tsx
                             ├── page.tsx
                         └── 📁create-admin
                             ├── page.tsx
@@ -62,9 +71,14 @@
                         └── 📁[id]
                             └── 📁moderate
                                 ├── route.ts
+                    └── 📁users
                 └── 📁auth
                     └── 📁[...nextauth]
                         ├── route.ts
+                    └── 📁account
+                        ├── account-route.ts
+                    └── 📁change-password
+                        ├── change-password-route.ts
                     └── 📁register
                         ├── route.ts
                 └── 📁profile
@@ -79,6 +93,7 @@
             └── 📁admin
                 ├── AdminLayout.tsx
                 ├── ProfileModerationForm.tsx
+                ├── UserMenu.tsx
             └── 📁dashboard
                 ├── DashboardLayout.tsx
             └── 📁layout
@@ -115,6 +130,7 @@
         └── 📁types
             ├── next-auth.d.ts
     ├── .env
+    ├── .env copy
     ├── .gitignore
     ├── components.json
     ├── eslint.config.mjs
@@ -127,7 +143,5 @@
     ├── prisma.config.ts
     ├── README.md
     ├── ROLE_HIERARCHY_REFERENCE.md
-    ├── Structure17-11.md
-    ├── Structure18-11.md
     └── tsconfig.json
 ```

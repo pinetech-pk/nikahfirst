@@ -48,13 +48,14 @@ interface AdminUser {
 export default function AdminUserEditPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [userId, setUserId] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -70,7 +71,12 @@ export default function AdminUserEditPage({
   useEffect(() => {
     async function fetchAdminUser() {
       try {
-        const response = await fetch(`/api/admin/users/${params.id}`);
+        // Await params first
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setUserId(id);
+
+        const response = await fetch(`/api/admin/users/${id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch user data");
         }
@@ -86,13 +92,15 @@ export default function AdminUserEditPage({
         setOriginalData(data);
         setLoading(false);
       } catch (err) {
+        // show error message
+        console.error(err);
         setError("Failed to load admin user data");
         setLoading(false);
       }
     }
 
     fetchAdminUser();
-  }, [params.id]);
+  }, [params]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +110,7 @@ export default function AdminUserEditPage({
     setSuccess("");
 
     try {
-      const response = await fetch(`/api/admin/users/${params.id}`, {
+      const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -118,7 +126,7 @@ export default function AdminUserEditPage({
 
       // Redirect after 2 seconds
       setTimeout(() => {
-        router.push(`/admin/users/admins/${params.id}`);
+        router.push(`/admin/users/admins/${userId}`);
         router.refresh();
       }, 2000);
     } catch (err: any) {
@@ -133,7 +141,7 @@ export default function AdminUserEditPage({
     if (
       confirm("Are you sure you want to cancel? Unsaved changes will be lost.")
     ) {
-      router.push(`/admin/users/admins/${params.id}`);
+      router.push(`/admin/users/admins/${userId}`);
     }
   };
 
@@ -195,7 +203,7 @@ export default function AdminUserEditPage({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/admin/users/admins/${params.id}`}>
+            <Link href={`/admin/users/admins/${userId}`}>
               <Button variant="outline" size="icon">
                 <ArrowLeft className="h-4 w-4" />
               </Button>

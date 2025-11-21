@@ -43,6 +43,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Logo } from "@/components/layout/header/Logo";
 
+import { UserMenu } from "./UserMenu";
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
@@ -351,35 +353,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </Button>
 
               {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-semibold">
-                      AM
-                    </div>
-                    <div className="text-left">
-                      <p className="text-sm font-semibold">Ahmad Mustafa</p>
-                      <p className="text-xs text-gray-500">Super Admin</p>
-                    </div>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-                  <DropdownMenuItem>Change Password</DropdownMenuItem>
-                  <DropdownMenuItem>Preferences</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserMenu />
             </div>
           </div>
         </header>
