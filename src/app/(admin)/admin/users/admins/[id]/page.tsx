@@ -1,8 +1,7 @@
-import { redirect, notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { notFound } from "next/navigation";
+import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
-import { isSupervisor } from "@/lib/permissions";
+import { getRoleBadge } from "@/lib/roleStyles";
 import { UserRole } from "@prisma/client";
 import {
   Card,
@@ -55,42 +54,13 @@ function formatRelativeTime(date: Date | null): string {
   return formatDate(date);
 }
 
-// Helper function to get role badge
-function getRoleBadge(role: string) {
-  const styles: Record<string, string> = {
-    SUPER_ADMIN: "bg-red-100 text-red-800",
-    SUPERVISOR: "bg-blue-100 text-blue-800",
-    CONTENT_EDITOR: "bg-purple-100 text-purple-800",
-    SUPPORT_AGENT: "bg-orange-100 text-orange-800",
-    CONSULTANT: "bg-green-100 text-green-800",
-  };
-
-  const labels: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin",
-    SUPERVISOR: "Supervisor",
-    CONTENT_EDITOR: "Content Editor",
-    SUPPORT_AGENT: "Support Agent",
-    CONSULTANT: "Consultant",
-  };
-
-  return {
-    className: styles[role] || "bg-gray-100 text-gray-800",
-    label: labels[role] || role,
-  };
-}
-
 export default async function AdminUserDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   // Check authentication and permissions
-  const session = await getServerSession(authOptions);
-  const userRole = session?.user?.role as UserRole | undefined;
-
-  if (!session || !isSupervisor(userRole)) {
-    redirect("/dashboard");
-  }
+  await requireSupervisor();
 
   // Await params
   const { id } = await params;

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
 import {
   Card,
@@ -12,17 +10,9 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { isAdmin, isSupervisor } from "@/lib/permissions";
-import { UserRole } from "@prisma/client";
 
 export default async function AdminUsersPage() {
-  const session = await getServerSession(authOptions);
-
-  // ✅ FIX: Use isAdmin() helper
-  const userRole = session?.user?.role as UserRole;
-  if (!session || !isAdmin(userRole)) {
-    redirect("/dashboard");
-  }
+  const session = await requireAdmin();
 
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },

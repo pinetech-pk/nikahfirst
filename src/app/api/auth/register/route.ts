@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { FREE_TIER, BCRYPT } from "@/config/constants";
 
 export async function POST(req: Request) {
   try {
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT.SALT_ROUNDS);
 
     // Create user with wallets
     const user = await prisma.user.create({
@@ -35,9 +36,9 @@ export async function POST(req: Request) {
         password: hashedPassword,
         redeemWallet: {
           create: {
-            balance: 3, // Free tier initial credits
-            limit: 5, // Free tier limit
-            nextRedemption: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+            balance: FREE_TIER.INITIAL_CREDITS,
+            limit: FREE_TIER.CREDIT_LIMIT,
+            nextRedemption: new Date(Date.now() + FREE_TIER.REDEMPTION_WINDOW_MS),
           },
         },
         fundingWallet: {

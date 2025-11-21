@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { getRoleBadge } from "@/lib/roleStyles";
 import {
   Card,
   CardContent,
@@ -145,30 +146,6 @@ export default function AccountSettingsPage() {
     setError("");
     setSuccess("");
   };
-
-  // Role badge helper
-  function getRoleBadge(role: string) {
-    const styles: Record<string, string> = {
-      SUPER_ADMIN: "bg-red-100 text-red-800",
-      SUPERVISOR: "bg-blue-100 text-blue-800",
-      CONTENT_EDITOR: "bg-purple-100 text-purple-800",
-      SUPPORT_AGENT: "bg-orange-100 text-orange-800",
-      CONSULTANT: "bg-green-100 text-green-800",
-    };
-
-    const labels: Record<string, string> = {
-      SUPER_ADMIN: "Super Admin",
-      SUPERVISOR: "Supervisor",
-      CONTENT_EDITOR: "Content Editor",
-      SUPPORT_AGENT: "Support Agent",
-      CONSULTANT: "Consultant",
-    };
-
-    return {
-      className: styles[role] || "bg-gray-100 text-gray-800",
-      label: labels[role] || role,
-    };
-  }
 
   if (loading) {
     return (
