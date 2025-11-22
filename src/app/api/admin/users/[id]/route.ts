@@ -1,0 +1,157 @@
+import { NextResponse } from "next/server";
+import { requireSupervisor } from "@/lib/authMiddleware";
+import { prisma } from "@/lib/prisma";
+import { UserRole } from "@prisma/client";
+
+/**
+ * GET /api/admin/users/[id]
+ * Fetch a specific admin user's data
+ */
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication and permissions
+    await requireSupervisor();
+
+    const { id } = await params;
+
+    // Fetch user data
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        phoneVerified: true,
+        isVerified: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLoginAt: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch user data" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/admin/users/[id]
+ * Update a specific admin user's data
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication and permissions
+    await requireSupervisor();
+
+    const { id } = await params;
+    const body = await req.json();
+
+    // Validate required fields
+    if (!body.name || !body.email || !body.role || !body.status) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Check if email is being changed and if it's already taken
+    if (body.email) {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          email: body.email,
+          NOT: { id },
+        },
+      });
+
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "Email already in use by another user" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate role
+    const validRoles: UserRole[] = [
+      "SUPER_ADMIN",
+      "SUPERVISOR",
+      "CONTENT_EDITOR",
+      "SUPPORT_AGENT",
+      "CONSULTANT",
+      "USER",
+    ];
+
+    if (!validRoles.includes(body.role as UserRole)) {
+      return NextResponse.json(
+        { error: "Invalid role" },
+        { status: 400 }
+      );
+    }
+
+    // Validate status
+    const validStatuses = ["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED"];
+    if (!validStatuses.includes(body.status)) {
+      return NextResponse.json(
+        { error: "Invalid status" },
+        { status: 400 }
+      );
+    }
+
+    // Update user
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: {
+        name: body.name,
+        email: body.email,
+        phone: body.phone || null,
+        role: body.role as UserRole,
+        status: body.status,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        emailVerified: true,
+        phoneVerified: true,
+        updatedAt: true,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "User updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return NextResponse.json(
+      { error: "Failed to update user" },
+      { status: 500 }
+    );
+  }
+}
