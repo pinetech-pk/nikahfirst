@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-// import { AdminLayout } from "@/components/admin/AdminLayout";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -33,11 +33,19 @@ import {
   Lock,
   Send,
   Info,
+  CheckCircle,
+  Copy,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CreateAdminPage() {
+  const router = useRouter();
   const [selectedRole, setSelectedRole] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [generatedPassword, setGeneratedPassword] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -112,11 +120,63 @@ export default function CreateAdminPage() {
     },
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Placeholder for form submission
-    console.log("Form submitted:", { ...formData, role: selectedRole });
-    alert("Admin creation will be implemented with backend integration");
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    setGeneratedPassword("");
+
+    if (!selectedRole) {
+      setError("Please select a role");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/create-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          department: formData.department,
+          role: selectedRole,
+          // Only send password field if NOT auto-generating
+          ...(formData.generatePassword ? {} : { password: "TempPassword123!" }),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create admin user");
+      }
+
+      setSuccess(data.message || "Admin user created successfully!");
+
+      // If password was auto-generated, show it
+      if (data.generatedPassword) {
+        setGeneratedPassword(data.generatedPassword);
+      }
+
+      // Reset form after 3 seconds if no generated password to copy
+      if (!data.generatedPassword) {
+        setTimeout(() => {
+          router.push("/admin/users/admins");
+        }, 2000);
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyPassword = () => {
+    navigator.clipboard.writeText(generatedPassword);
+    alert("Password copied to clipboard!");
   };
 
   return (
@@ -131,6 +191,47 @@ export default function CreateAdminPage() {
             Add a new team member with administrative privileges
           </p>
         </div>
+
+        {/* Success Message with Generated Password */}
+        {success && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <div className="space-y-2">
+                <p className="font-semibold">{success}</p>
+                {generatedPassword && (
+                  <div className="mt-3 p-3 bg-white border border-green-200 rounded-md">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Generated Password (save this - it won't be shown again):
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 px-3 py-2 bg-gray-100 rounded font-mono text-sm">
+                        {generatedPassword}
+                      </code>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={copyPassword}
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copy
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -365,11 +466,26 @@ export default function CreateAdminPage() {
 
               {/* Form Actions */}
               <div className="flex gap-3">
-                <Button type="submit" size="lg">
-                  <Send className="h-4 w-4 mr-2" />
-                  Create Admin User
+                <Button type="submit" size="lg" disabled={loading || !!success}>
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Create Admin User
+                    </>
+                  )}
                 </Button>
-                <Button type="button" variant="outline" size="lg">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  onClick={() => router.push("/admin/users/admins")}
+                  disabled={loading}
+                >
                   Cancel
                 </Button>
               </div>
