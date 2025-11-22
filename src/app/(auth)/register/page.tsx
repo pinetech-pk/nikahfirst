@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useForm } from "@/hooks/useForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,52 +17,55 @@ import {
 import Link from "next/link";
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const form = useForm({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    form.clearMessages();
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    if (form.formData.password !== form.formData.confirmPassword) {
+      form.setErrorMessage("Passwords do not match");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (form.formData.password.length < 6) {
+      form.setErrorMessage("Password must be at least 6 characters");
       return;
     }
 
-    setLoading(true);
+    form.startLoading();
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: form.formData.email,
+          password: form.formData.password,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        form.setErrorMessage(data.error || "Something went wrong");
       } else {
         // Auto-login after registration
         await signIn("credentials", {
-          email,
-          password,
+          email: form.formData.email,
+          password: form.formData.password,
           callbackUrl: "/dashboard",
         });
       }
     } catch (error) {
-      setError("Something went wrong");
+      form.setErrorMessage("Something went wrong");
     } finally {
-      setLoading(false);
+      form.stopLoading();
     }
   };
 
@@ -82,8 +85,8 @@ export default function RegisterPage() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={form.formData.email}
+                onChange={(e) => form.updateField("email", e.target.value)}
                 required
                 placeholder="your@email.com"
               />
@@ -93,8 +96,8 @@ export default function RegisterPage() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={form.formData.password}
+                onChange={(e) => form.updateField("password", e.target.value)}
                 required
                 placeholder="Min. 6 characters"
               />
@@ -104,17 +107,17 @@ export default function RegisterPage() {
               <Input
                 id="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={form.formData.confirmPassword}
+                onChange={(e) => form.updateField("confirmPassword", e.target.value)}
                 required
                 placeholder="Re-enter password"
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {form.error && <p className="text-sm text-red-500">{form.error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Sign Up"}
+            <Button type="submit" className="w-full" disabled={form.loading}>
+              {form.loading ? "Creating account..." : "Sign Up"}
             </Button>
             <p className="text-sm text-center text-slate-600">
               Already have an account?{" "}
