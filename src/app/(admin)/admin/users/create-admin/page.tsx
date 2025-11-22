@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useForm } from "@/hooks/useForm";
 import {
   Card,
   CardContent,
@@ -41,12 +42,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 export default function CreateAdminPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [generatedPassword, setGeneratedPassword] = useState("");
 
-  const [formData, setFormData] = useState({
+  const form = useForm({
     name: "",
     email: "",
     phone: "",
@@ -122,14 +120,11 @@ export default function CreateAdminPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
+    form.startLoading();
     setGeneratedPassword("");
 
     if (!selectedRole) {
-      setError("Please select a role");
-      setLoading(false);
+      form.setErrorMessage("Please select a role");
       return;
     }
 
@@ -138,13 +133,13 @@ export default function CreateAdminPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          department: formData.department,
+          name: form.formData.name,
+          email: form.formData.email,
+          phone: form.formData.phone,
+          department: form.formData.department,
           role: selectedRole,
           // Only send password field if NOT auto-generating
-          ...(formData.generatePassword ? {} : { password: "TempPassword123!" }),
+          ...(form.formData.generatePassword ? {} : { password: "TempPassword123!" }),
         }),
       });
 
@@ -154,7 +149,7 @@ export default function CreateAdminPage() {
         throw new Error(data.error || "Failed to create admin user");
       }
 
-      setSuccess(data.message || "Admin user created successfully!");
+      form.setSuccessMessage(data.message || "Admin user created successfully!");
 
       // If password was auto-generated, show it
       if (data.generatedPassword) {
@@ -168,9 +163,7 @@ export default function CreateAdminPage() {
         }, 2000);
       }
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+      form.setErrorMessage(err.message || "Something went wrong");
     }
   };
 
@@ -193,12 +186,12 @@ export default function CreateAdminPage() {
         </div>
 
         {/* Success Message with Generated Password */}
-        {success && (
+        {form.success && (
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
               <div className="space-y-2">
-                <p className="font-semibold">{success}</p>
+                <p className="font-semibold">{form.success}</p>
                 {generatedPassword && (
                   <div className="mt-3 p-3 bg-white border border-green-200 rounded-md">
                     <p className="text-sm font-medium text-gray-700 mb-2">
@@ -226,10 +219,10 @@ export default function CreateAdminPage() {
         )}
 
         {/* Error Message */}
-        {error && (
+        {form.error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{form.error}</AlertDescription>
           </Alert>
         )}
 
@@ -257,9 +250,9 @@ export default function CreateAdminPage() {
                           id="name"
                           placeholder="John Doe"
                           className="pl-9"
-                          value={formData.name}
+                          value={form.formData.name}
                           onChange={(e) =>
-                            setFormData({ ...formData, name: e.target.value })
+                            form.updateField("name", e.target.value)
                           }
                           required
                         />
@@ -277,9 +270,9 @@ export default function CreateAdminPage() {
                           type="email"
                           placeholder="admin@nikahfirst.com"
                           className="pl-9"
-                          value={formData.email}
+                          value={form.formData.email}
                           onChange={(e) =>
-                            setFormData({ ...formData, email: e.target.value })
+                            form.updateField("email", e.target.value)
                           }
                           required
                         />
@@ -295,9 +288,9 @@ export default function CreateAdminPage() {
                           type="tel"
                           placeholder="+92 300 1234567"
                           className="pl-9"
-                          value={formData.phone}
+                          value={form.formData.phone}
                           onChange={(e) =>
-                            setFormData({ ...formData, phone: e.target.value })
+                            form.updateField("phone", e.target.value)
                           }
                         />
                       </div>
@@ -311,12 +304,9 @@ export default function CreateAdminPage() {
                           id="department"
                           placeholder="e.g., Content Team"
                           className="pl-9"
-                          value={formData.department}
+                          value={form.formData.department}
                           onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              department: e.target.value,
-                            })
+                            form.updateField("department", e.target.value)
                           }
                         />
                       </div>
@@ -392,12 +382,9 @@ export default function CreateAdminPage() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="sendEmail"
-                        checked={formData.sendWelcomeEmail}
+                        checked={form.formData.sendWelcomeEmail}
                         onCheckedChange={(checked) =>
-                          setFormData({
-                            ...formData,
-                            sendWelcomeEmail: checked as boolean,
-                          })
+                          form.updateField("sendWelcomeEmail", checked as boolean)
                         }
                       />
                       <div className="grid gap-1.5 leading-none">
@@ -416,12 +403,9 @@ export default function CreateAdminPage() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="requirePassword"
-                        checked={formData.requirePasswordChange}
+                        checked={form.formData.requirePasswordChange}
                         onCheckedChange={(checked) =>
-                          setFormData({
-                            ...formData,
-                            requirePasswordChange: checked as boolean,
-                          })
+                          form.updateField("requirePasswordChange", checked as boolean)
                         }
                       />
                       <div className="grid gap-1.5 leading-none">
@@ -440,12 +424,9 @@ export default function CreateAdminPage() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="generatePassword"
-                        checked={formData.generatePassword}
+                        checked={form.formData.generatePassword}
                         onCheckedChange={(checked) =>
-                          setFormData({
-                            ...formData,
-                            generatePassword: checked as boolean,
-                          })
+                          form.updateField("generatePassword", checked as boolean)
                         }
                       />
                       <div className="grid gap-1.5 leading-none">
@@ -466,8 +447,8 @@ export default function CreateAdminPage() {
 
               {/* Form Actions */}
               <div className="flex gap-3">
-                <Button type="submit" size="lg" disabled={loading || !!success}>
-                  {loading ? (
+                <Button type="submit" size="lg" disabled={form.loading || !!form.success}>
+                  {form.loading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Creating...
@@ -484,7 +465,7 @@ export default function CreateAdminPage() {
                   variant="outline"
                   size="lg"
                   onClick={() => router.push("/admin/users/admins")}
-                  disabled={loading}
+                  disabled={form.loading}
                 >
                   Cancel
                 </Button>

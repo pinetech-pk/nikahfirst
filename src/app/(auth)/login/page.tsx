@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useForm } from "@/hooks/useForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,26 +19,25 @@ import { isAdmin } from "@/lib/permissions";
 import { UserRole } from "@prisma/client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const form = useForm({
+    email: "",
+    password: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    form.startLoading();
 
     try {
       const result = await signIn("credentials", {
-        email,
-        password,
+        email: form.formData.email,
+        password: form.formData.password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        form.setErrorMessage("Invalid email or password");
       } else {
         // Fetch user session to check role
         const response = await fetch("/api/auth/session");
@@ -54,9 +53,9 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Login error:", error);
-      setError("Something went wrong");
+      form.setErrorMessage("Something went wrong");
     } finally {
-      setLoading(false);
+      form.stopLoading();
     }
   };
 
@@ -74,8 +73,8 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={form.formData.email}
+                onChange={(e) => form.updateField("email", e.target.value)}
                 required
                 placeholder="your@email.com"
               />
@@ -85,17 +84,17 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={form.formData.password}
+                onChange={(e) => form.updateField("password", e.target.value)}
                 required
                 placeholder="••••••••"
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {form.error && <p className="text-sm text-red-500">{form.error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Logging in..." : "Login"}
+            <Button type="submit" className="w-full" disabled={form.loading}>
+              {form.loading ? "Logging in..." : "Login"}
             </Button>
             <p className="text-sm text-center text-slate-600">
               Don't have an account?{" "}
