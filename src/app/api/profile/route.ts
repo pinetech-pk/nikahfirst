@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PROFILE_REWARDS, DEFAULTS } from "@/config/constants";
 
 export async function POST(req: Request) {
   try {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
         dateOfBirth: new Date(data.dateOfBirth),
         bio: data.bio,
         city: data.city,
-        country: data.country || "Pakistan",
+        country: data.country || DEFAULTS.COUNTRY,
       },
     });
 
@@ -32,14 +33,14 @@ export async function POST(req: Request) {
     await prisma.redeemWallet.update({
       where: { userId: session.user.id },
       data: {
-        balance: { increment: 2 }, // Bonus credits for completing profile
+        balance: { increment: PROFILE_REWARDS.COMPLETION_BONUS },
       },
     });
 
     return NextResponse.json({
       success: true,
       profileId: profile.id,
-      message: "Profile created! You earned 2 bonus credits.",
+      message: `Profile created! You earned ${PROFILE_REWARDS.COMPLETION_BONUS} bonus credits.`,
     });
   } catch (error) {
     console.error("Profile creation error:", error);

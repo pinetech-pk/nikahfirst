@@ -1,9 +1,6 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
-import { isSupervisor, isAdmin } from "@/lib/permissions";
-import { UserRole } from "@prisma/client";
+import { getRoleBadge } from "@/lib/roleStyles";
 import {
   Card,
   CardContent,
@@ -81,39 +78,9 @@ function formatLastActive(lastLoginAt: Date | null): {
   };
 }
 
-// Helper function to get role badge styling
-function getRoleBadge(role: string) {
-  const styles: Record<string, string> = {
-    SUPER_ADMIN: "bg-red-100 text-red-800",
-    SUPERVISOR: "bg-blue-100 text-blue-800",
-    CONTENT_EDITOR: "bg-purple-100 text-purple-800",
-    SUPPORT_AGENT: "bg-orange-100 text-orange-800",
-    CONSULTANT: "bg-green-100 text-green-800",
-  };
-
-  const labels: Record<string, string> = {
-    SUPER_ADMIN: "Super Admin",
-    SUPERVISOR: "Supervisor",
-    CONTENT_EDITOR: "Content Editor",
-    SUPPORT_AGENT: "Support Agent",
-    CONSULTANT: "Consultant",
-  };
-
-  return {
-    className: styles[role] || "bg-gray-100 text-gray-800",
-    label: labels[role] || role,
-  };
-}
-
 export default async function AdminUsersPage() {
   // Check authentication and permissions
-  const session = await getServerSession(authOptions);
-  const userRole = session?.user?.role as UserRole | undefined;
-
-  // Only SUPER_ADMIN and SUPERVISOR can view admin list
-  if (!session || !isSupervisor(userRole)) {
-    redirect("/dashboard");
-  }
+  await requireSupervisor();
 
   // Fetch admin role counts
   const [

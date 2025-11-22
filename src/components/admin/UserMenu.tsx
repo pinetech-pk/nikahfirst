@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import { getRoleBadge } from "@/lib/roleStyles";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -50,30 +51,6 @@ export function UserMenu() {
       return session.user.name;
     }
     return session.user.email?.split("@")[0] || "User";
-  };
-
-  // Get role badge
-  const getRoleBadge = (role: string) => {
-    const styles: Record<string, string> = {
-      SUPER_ADMIN: "bg-red-100 text-red-800",
-      SUPERVISOR: "bg-blue-100 text-blue-800",
-      CONTENT_EDITOR: "bg-purple-100 text-purple-800",
-      SUPPORT_AGENT: "bg-orange-100 text-orange-800",
-      CONSULTANT: "bg-green-100 text-green-800",
-    };
-
-    const labels: Record<string, string> = {
-      SUPER_ADMIN: "Super Admin",
-      SUPERVISOR: "Supervisor",
-      CONTENT_EDITOR: "Content Editor",
-      SUPPORT_AGENT: "Support Agent",
-      CONSULTANT: "Consultant",
-    };
-
-    return {
-      className: styles[role] || "bg-gray-100 text-gray-800",
-      label: labels[role] || role,
-    };
   };
 
   const initials = getInitials(session.user.name, session.user.email || "U");

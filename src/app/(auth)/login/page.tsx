@@ -44,25 +44,11 @@ export default function LoginPage() {
         const response = await fetch("/api/auth/session");
         const session = await response.json();
 
-        // 🔍 DEBUG LOGGING
-        console.log("=== LOGIN DEBUG ===");
-        console.log("1. Full session:", JSON.stringify(session, null, 2));
-        console.log("2. User object:", session?.user);
-        console.log("3. Role value:", session?.user?.role);
-        console.log("4. Role type:", typeof session?.user?.role);
-
         const userRole = session?.user?.role as UserRole | undefined;
-        console.log("5. userRole variable:", userRole);
 
-        const adminCheck = isAdmin(userRole);
-        console.log("6. isAdmin() result:", adminCheck);
-        console.log("==================");
-
-        if (adminCheck) {
-          console.log("✅ Redirecting to /admin");
+        if (isAdmin(userRole)) {
           router.push("/admin");
         } else {
-          console.log("❌ Redirecting to /dashboard");
           router.push("/dashboard");
         }
       }
