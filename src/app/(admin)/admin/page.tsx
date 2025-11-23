@@ -8,14 +8,13 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatsCard } from "@/components/ui/stats-card";
 import {
   Users,
   FileText,
   Clock,
   DollarSign,
   Shield,
-  TrendingUp,
-  TrendingDown,
   Eye,
   Plus,
   BarChart3,
@@ -30,54 +29,54 @@ export default function AdminDashboard() {
       title: "Total Regular Users",
       value: "2,456",
       change: "+12%",
-      trend: "up",
+      trend: "up" as const,
       icon: Users,
-      color: "blue",
+      iconColor: "bg-blue-100 text-blue-600",
       description: "from last month",
     },
     {
       title: "Active Profiles",
       value: "1,823",
       change: "+8%",
-      trend: "up",
+      trend: "up" as const,
       icon: FileText,
-      color: "green",
+      iconColor: "bg-green-100 text-green-600",
       description: "from last month",
     },
     {
       title: "Pending Approvals",
       value: "8",
       change: "Needs attention",
-      trend: "neutral",
+      trend: "neutral" as const,
       icon: Clock,
-      color: "yellow",
+      iconColor: "bg-orange-100 text-orange-600",
       description: "",
     },
     {
       title: "Premium Subscribers",
       value: "456",
       change: "+23%",
-      trend: "up",
+      trend: "up" as const,
       icon: Users,
-      color: "purple",
+      iconColor: "bg-purple-100 text-purple-600",
       description: "from last month",
     },
     {
       title: "Admin Team",
       value: "12",
       change: "4 Supervisors, 8 Staff",
-      trend: "neutral",
+      trend: "neutral" as const,
       icon: Shield,
-      color: "red",
+      iconColor: "bg-red-100 text-red-600",
       description: "",
     },
     {
       title: "Monthly Revenue",
       value: "$12,456",
       change: "+18%",
-      trend: "up",
+      trend: "up" as const,
       icon: DollarSign,
-      color: "green",
+      iconColor: "bg-green-100 text-green-600",
       description: "from last month",
     },
   ];
@@ -125,17 +124,6 @@ export default function AdminDashboard() {
     },
   ];
 
-  const getIconBgColor = (color: string) => {
-    const colors = {
-      blue: "bg-blue-100 text-blue-600",
-      green: "bg-green-100 text-green-600",
-      yellow: "bg-orange-100 text-orange-600",
-      purple: "bg-purple-100 text-purple-600",
-      red: "bg-red-100 text-red-600",
-    };
-    return colors[color as keyof typeof colors] || colors.blue;
-  };
-
   return (
     <>
       <div className="space-y-6">
@@ -152,47 +140,17 @@ export default function AdminDashboard() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
           {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold mt-2">{stat.value}</p>
-                    <div className="flex items-center mt-2">
-                      {stat.trend === "up" && (
-                        <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                      )}
-                      {stat.trend === "down" && (
-                        <TrendingDown className="h-4 w-4 text-red-500 mr-1" />
-                      )}
-                      <span
-                        className={`text-sm ${
-                          stat.trend === "up"
-                            ? "text-green-600"
-                            : stat.trend === "down"
-                            ? "text-red-600"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {stat.change}
-                      </span>
-                    </div>
-                    {stat.description && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        {stat.description}
-                      </p>
-                    )}
-                  </div>
-                  <div
-                    className={`p-3 rounded-lg ${getIconBgColor(stat.color)}`}
-                  >
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <StatsCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              iconColor={stat.iconColor}
+              trend={stat.trend}
+              change={stat.change}
+              description={stat.description}
+              hoverable
+            />
           ))}
         </div>
 

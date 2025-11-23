@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SimpleStatsCard } from "@/components/ui/stats-card";
 import {
   Select,
   SelectContent,
@@ -36,25 +37,25 @@ export default function PendingProfilesPage() {
       title: "Pending Today",
       value: "8",
       icon: Clock,
-      color: "bg-orange-100 text-orange-600",
+      iconColor: "bg-orange-100 text-orange-600",
     },
     {
       title: "Approved Today",
       value: "12",
       icon: CheckCircle,
-      color: "bg-green-100 text-green-600",
+      iconColor: "bg-green-100 text-green-600",
     },
     {
       title: "Rejected Today",
       value: "3",
       icon: XCircle,
-      color: "bg-red-100 text-red-600",
+      iconColor: "bg-red-100 text-red-600",
     },
     {
       title: "Avg. Review Time",
       value: "24m",
       icon: Timer,
-      color: "bg-blue-100 text-blue-600",
+      iconColor: "bg-blue-100 text-blue-600",
     },
   ];
 
@@ -202,21 +203,13 @@ export default function PendingProfilesPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <SimpleStatsCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              iconColor={stat.iconColor}
+            />
           ))}
         </div>
 
