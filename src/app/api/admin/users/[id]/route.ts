@@ -196,10 +196,28 @@ export async function DELETE(
       );
     }
 
-    // Delete the user (cascade delete will handle related records)
-    await prisma.user.delete({
-      where: { id },
-    });
+    // Delete related records first (Prisma doesn't have cascade delete configured)
+    await prisma.$transaction([
+      // Delete profiles
+      prisma.profile.deleteMany({
+        where: { userId: id },
+      }),
+      // Delete transactions
+      prisma.transaction.deleteMany({
+        where: { userId: id },
+      }),
+      // Delete wallets (one-to-one relationships)
+      prisma.redeemWallet.deleteMany({
+        where: { userId: id },
+      }),
+      prisma.fundingWallet.deleteMany({
+        where: { userId: id },
+      }),
+      // Finally delete the user
+      prisma.user.delete({
+        where: { id },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
