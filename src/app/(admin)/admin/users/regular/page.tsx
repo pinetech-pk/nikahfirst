@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { SimpleStatsCard } from "@/components/ui/stats-card";
 import {
   Select,
   SelectContent,
@@ -38,25 +39,25 @@ export default function RegularUsersPage() {
       title: "Total Users",
       value: "2,456",
       icon: Users,
-      color: "bg-blue-100 text-blue-600",
+      iconColor: "bg-blue-100 text-blue-600",
     },
     {
       title: "Active Today",
       value: "342",
       icon: UserCheck,
-      color: "bg-green-100 text-green-600",
+      iconColor: "bg-green-100 text-green-600",
     },
     {
       title: "Premium Users",
       value: "456",
       icon: Diamond,
-      color: "bg-purple-100 text-purple-600",
+      iconColor: "bg-purple-100 text-purple-600",
     },
     {
       title: "New This Month",
       value: "89",
       icon: TrendingUp,
-      color: "bg-orange-100 text-orange-600",
+      iconColor: "bg-orange-100 text-orange-600",
     },
   ];
 
@@ -150,21 +151,13 @@ export default function RegularUsersPage() {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
-            <Card key={index}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {stat.title}
-                    </p>
-                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${stat.color}`}>
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <SimpleStatsCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              iconColor={stat.iconColor}
+            />
           ))}
         </div>
 
