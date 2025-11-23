@@ -61,7 +61,8 @@ export default async function AdminUserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   // Check authentication and permissions
-  await requireSupervisor();
+  const session = await requireSupervisor();
+  const currentUserId = session.user?.id;
 
   // Await params
   const { id } = await params;
@@ -509,12 +510,15 @@ export default async function AdminUserDetailPage({
                   <Ban className="h-4 w-4 mr-2" />
                   Suspend Account
                 </Button>
-                <DeleteAdminButton
-                  userId={adminUser.id}
-                  userName={adminUser.name || "Unknown"}
-                  userEmail={adminUser.email}
-                  className="w-full"
-                />
+                {/* Only show delete button if not viewing own account */}
+                {currentUserId !== adminUser.id && (
+                  <DeleteAdminButton
+                    userId={adminUser.id}
+                    userName={adminUser.name || "Unknown"}
+                    userEmail={adminUser.email}
+                    className="w-full"
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
