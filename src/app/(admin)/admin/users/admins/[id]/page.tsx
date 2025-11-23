@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
 import { getRoleBadge } from "@/lib/roleStyles";
@@ -26,6 +26,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { DeleteAdminButton } from "@/components/admin/DeleteAdminButton";
 
 // Helper function to format dates
 function formatDate(date: Date | null): string {
@@ -503,11 +504,17 @@ export default async function AdminUserDetailPage({
                 </Button>
                 <Button
                   variant="outline"
-                  className="w-full justify-start text-red-600 hover:text-red-700"
+                  className="w-full justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                 >
                   <Ban className="h-4 w-4 mr-2" />
                   Suspend Account
                 </Button>
+                <DeleteAdminButton
+                  userId={adminUser.id}
+                  userName={adminUser.name || "Unknown"}
+                  userEmail={adminUser.email}
+                  className="w-full"
+                />
               </CardContent>
             </Card>
           </div>
