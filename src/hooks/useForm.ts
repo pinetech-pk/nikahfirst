@@ -47,22 +47,30 @@ export function useForm<T extends Record<string, any>>(initialValues: T) {
 
   /**
    * Update a single field in the form
+   * Automatically clears error and success messages when user modifies the form
    */
   const updateField = <K extends keyof T>(field: K, value: T[K]) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+    // Clear messages when user starts typing/modifying the form
+    setError("");
+    setSuccess("");
   };
 
   /**
    * Update multiple fields at once
+   * Automatically clears error and success messages when user modifies the form
    */
   const updateFields = (fields: Partial<T>) => {
     setFormData((prev) => ({
       ...prev,
       ...fields,
     }));
+    // Clear messages when user starts typing/modifying the form
+    setError("");
+    setSuccess("");
   };
 
   /**
