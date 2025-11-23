@@ -74,21 +74,21 @@ export function DeleteAdminButton({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription className="space-y-2">
-            <p>
-              This action cannot be undone. This will permanently delete the
-              admin account for:
-            </p>
-            <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
-              <p className="font-semibold text-gray-900">{userName}</p>
-              <p className="text-sm text-gray-600">{userEmail}</p>
-            </div>
-            <p className="text-sm text-red-600 font-medium mt-2">
-              All associated data including wallets and profiles will be
-              permanently removed.
-            </p>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the
+            admin account for:
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="space-y-3">
+          <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
+            <p className="font-semibold text-gray-900">{userName}</p>
+            <p className="text-sm text-gray-600">{userEmail}</p>
+          </div>
+          <p className="text-sm text-red-600 font-medium">
+            All associated data including wallets and profiles will be
+            permanently removed.
+          </p>
+        </div>
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
             <p className="text-sm">{error}</p>
