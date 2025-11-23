@@ -155,3 +155,61 @@ export async function PATCH(
     );
   }
 }
+
+/**
+ * DELETE /api/admin/users/[id]
+ * Delete a specific admin user
+ */
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check authentication and permissions
+    const session = await requireSupervisor();
+
+    const { id } = await params;
+
+    // Prevent self-deletion
+    if (session.user?.id === id) {
+      return NextResponse.json(
+        { error: "You cannot delete your own account" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the user (cascade delete will handle related records)
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `User ${user.name} (${user.email}) deleted successfully`,
+    });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json(
+      { error: "Failed to delete user" },
+      { status: 500 }
+    );
+  }
+}
