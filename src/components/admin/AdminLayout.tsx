@@ -110,14 +110,38 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Get dynamic breadcrumb
   const breadcrumb = useMemo(() => {
-    // Handle dynamic routes like /admin/profiles/[id]/review
-    if (pathname.includes("/admin/profiles/") && pathname.includes("/review")) {
-      return { section: "Profile Management", page: "Review Profile" };
+    // Check static map first
+    if (BREADCRUMB_MAP[pathname]) {
+      return BREADCRUMB_MAP[pathname];
     }
 
-    return (
-      BREADCRUMB_MAP[pathname] || { section: "Dashboard", page: "Overview" }
-    );
+    // Handle dynamic routes with pattern matching
+    // Admin user routes: /admin/users/admins/[id] and /admin/users/admins/[id]/edit
+    if (pathname.match(/^\/admin\/users\/admins\/[^/]+\/edit$/)) {
+      return { section: "User Management", page: "Edit Admin User" };
+    }
+    if (pathname.match(/^\/admin\/users\/admins\/[^/]+$/)) {
+      return { section: "User Management", page: "Admin User Details" };
+    }
+
+    // Regular user routes: /admin/users/regular/[id] and /admin/users/regular/[id]/edit
+    if (pathname.match(/^\/admin\/users\/regular\/[^/]+\/edit$/)) {
+      return { section: "User Management", page: "Edit User" };
+    }
+    if (pathname.match(/^\/admin\/users\/regular\/[^/]+$/)) {
+      return { section: "User Management", page: "User Details" };
+    }
+
+    // Profile routes: /admin/profiles/[id]/review
+    if (pathname.match(/^\/admin\/profiles\/[^/]+\/review$/)) {
+      return { section: "Profile Management", page: "Review Profile" };
+    }
+    if (pathname.match(/^\/admin\/profiles\/[^/]+$/)) {
+      return { section: "Profile Management", page: "Profile Details" };
+    }
+
+    // Default fallback
+    return { section: "Dashboard", page: "Overview" };
   }, [pathname]);
 
   const navigation = [
