@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"  // Will change to "postgresql" in production
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED") // For migrations (direct connection)
 }
 
 // ==================== AUTH & USERS ====================
@@ -13,7 +14,7 @@ model User {
   email         String    @unique
   phone         String?   @unique
   password      String
-  name          String?   // Added later, but needed as contact person
+  name          String?
   isVerified    Boolean   @default(false)
   emailVerified Boolean   @default(false)
   phoneVerified Boolean   @default(false)
@@ -25,7 +26,7 @@ model User {
   subscriptionExpiry DateTime?
   
   // Relationships
-  profiles      Profile[]  // Can manage multiple profiles
+  profiles      Profile[]
   redeemWallet  RedeemWallet?
   fundingWallet FundingWallet?
   transactions  Transaction[]
@@ -34,17 +35,19 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
-  deletedAt     DateTime? // Soft delete
+  deletedAt     DateTime?
+
+  @@map("users") // PostgreSQL table naming convention
 }
 
 // ==================== PROFILES (MATRIMONIAL) ====================
 model Profile {
   id            String    @id @default(cuid())
   userId        String
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Profile Ownership
-  profileFor    ProfileFor  // SELF, SON, DAUGHTER, BROTHER, SISTER, etc.
+  profileFor    ProfileFor
   
   // Basic Info (Required)
   firstName     String
@@ -53,7 +56,7 @@ model Profile {
   dateOfBirth   DateTime
   
   // Additional Info (Added progressively)
-  bio           String?
+  bio           String?   @db.Text // PostgreSQL Text type for longer content
   education     String?
   profession    String?
   city          String?
@@ -68,16 +71,16 @@ model Profile {
   // Preferences
   minAge        Int?
   maxAge        Int?
-  preferredCities String?
+  preferredCities String? @db.Text
   
   // Privacy & Visibility
   isActive      Boolean   @default(true)
-  isPublished   Boolean   @default(false) // Complete enough to show
+  isPublished   Boolean   @default(false)
   visibility    ProfileVisibility @default(VISIBLE)
   
   // Verification
   isVerified    Boolean   @default(false)
-  verificationLevel Int  @default(0) // 0-5 levels
+  verificationLevel Int   @default(0)
   
   // Stats
   profileViews  Int       @default(0)
@@ -91,19 +94,26 @@ model Profile {
   // Timestamps
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([userId]) // Index for faster queries
+  @@index([gender, isPublished, isActive]) // Composite index for search
+  @@map("profiles")
 }
 
 // ==================== PHOTOS ====================
 model Photo {
   id          String    @id @default(cuid())
   profileId   String
-  profile     Profile   @relation(fields: [profileId], references: [id])
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
   url         String
   isMain      Boolean   @default(false)
   isPublic    Boolean   @default(true)
   isVerified  Boolean   @default(false)
   order       Int       @default(0)
   createdAt   DateTime  @default(now())
+
+  @@index([profileId])
+  @@map("photos")
 }
 
 // ==================== CONNECTIONS ====================
@@ -111,13 +121,13 @@ model Connection {
   id          String    @id @default(cuid())
   
   senderId    String
-  sender      Profile   @relation("SentConnections", fields: [senderId], references: [id])
+  sender      Profile   @relation("SentConnections", fields: [senderId], references: [id], onDelete: Cascade)
   
   receiverId  String
-  receiver    Profile   @relation("ReceivedConnections", fields: [receiverId], references: [id])
+  receiver    Profile   @relation("ReceivedConnections", fields: [receiverId], references: [id], onDelete: Cascade)
   
   status      ConnectionStatus @default(PENDING)
-  message     String?
+  message     String?   @db.Text
   
   // Track credit usage
   creditsUsed Int       @default(1)
@@ -128,68 +138,81 @@ model Connection {
   respondedAt DateTime?
   
   @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+  @@map("connections")
 }
 
 // ==================== WALLETS ====================
 model RedeemWallet {
   id            String    @id @default(cuid())
   userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance       Int       @default(0)
-  frozenBalance Int       @default(0) // Credits frozen due to ban/suspension
-  limit         Int       // Based on subscription tier
+  frozenBalance Int       @default(0)
+  limit         Int
   lastRedeemed  DateTime  @default(now())
   nextRedemption DateTime
   creditsWasted Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("redeem_wallets")
 }
 
 model FundingWallet {
   id            String    @id @default(cuid())
   userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   balance       Int       @default(0)
-  frozenBalance Int       @default(0) // Credits frozen due to ban/suspension
+  frozenBalance Int       @default(0)
   totalPurchased Int      @default(0)
   totalSpent    Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@map("funding_wallets")
 }
 
 // ==================== TRANSACTIONS ====================
 model Transaction {
   id            String    @id @default(cuid())
   userId        String
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   type          TransactionType
   walletType    WalletType
   amount        Int
   description   String
-  
+
   // For purchases
   paymentMethod String?
   paymentId     String?
   
   createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("transactions")
 }
 
 // ==================== ENUMS ====================
 enum UserRole {
-  USER              // Regular users (members)
-  SUPPORT_AGENT     // Tier 1: Customer service (handle complaints, mark refunds)
-  CONTENT_EDITOR    // Tier 2: Content moderation (approve/reject profiles, edit data)
-  CONSULTANT        // Tier 2: Matchmaking services (not in MVP)
-  SUPERVISOR        // Tier 3: Senior moderator (create lower admins, ban users, upgrade premium)
-  SUPER_ADMIN       // Tier 4: Full system control (analytics, global settings)
+  USER
+  SUPPORT_AGENT
+  CONTENT_EDITOR
+  CONSULTANT
+  SUPERVISOR
+  SUPER_ADMIN
 }
 
 enum UserStatus {
-  ACTIVE      // Normal active user
-  INACTIVE    // User deactivated their own account
-  SUSPENDED   // Temporarily suspended by admin (can be reactivated)
-  BANNED      // Permanently banned by admin
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  BANNED
 }
 
 enum SubscriptionTier {
