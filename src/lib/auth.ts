@@ -57,6 +57,13 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async signIn({ user }) {
+      // Update lastLoginAt timestamp on successful login
+      if (user?.id) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+      }
       return true;
     },
     async redirect({ url, baseUrl }) {
