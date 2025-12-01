@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -29,6 +29,7 @@ import Link from "next/link";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const alertRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -73,30 +74,44 @@ export default function ChangePasswordPage() {
 
   const strengthInfo = getStrengthLabel(passwordStrength.strength);
 
+  // Helper function to scroll to alert area
+  const scrollToAlert = () => {
+    // Small delay to ensure the DOM has updated with the alert
+    setTimeout(() => {
+      alertRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  };
+
   // Validate form
   const validateForm = () => {
     if (!formData.currentPassword) {
       setError("Please enter your current password");
+      scrollToAlert();
       return false;
     }
     if (!formData.newPassword) {
       setError("Please enter a new password");
+      scrollToAlert();
       return false;
     }
     if (formData.newPassword.length < 8) {
       setError("New password must be at least 8 characters long");
+      scrollToAlert();
       return false;
     }
     if (passwordStrength.strength < 3) {
       setError("Please choose a stronger password");
+      scrollToAlert();
       return false;
     }
     if (formData.newPassword !== formData.confirmPassword) {
       setError("New passwords do not match");
+      scrollToAlert();
       return false;
     }
     if (formData.currentPassword === formData.newPassword) {
       setError("New password must be different from current password");
+      scrollToAlert();
       return false;
     }
     return true;
@@ -131,6 +146,7 @@ export default function ChangePasswordPage() {
       }
 
       setSuccess("Password changed successfully!");
+      scrollToAlert();
 
       // Reset form
       setFormData({
@@ -145,6 +161,7 @@ export default function ChangePasswordPage() {
       }, 2000);
     } catch (err: any) {
       setError(err.message || "Something went wrong");
+      scrollToAlert();
     } finally {
       setSaving(false);
     }
@@ -182,23 +199,26 @@ export default function ChangePasswordPage() {
         </div>
       </div>
 
-      {/* Success Message */}
-      {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            {success}
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Alert Messages Container */}
+      <div ref={alertRef}>
+        {/* Success Message */}
+        {success && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              {success}
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Error Message */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {/* Error Message */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Form */}
