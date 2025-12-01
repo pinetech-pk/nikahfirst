@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
-import { UserRole } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { BCRYPT } from "@/config/constants";
 
@@ -127,7 +127,7 @@ export async function PATCH(
       email: string;
       phone: string | null;
       role: UserRole;
-      status: string;
+      status: UserStatus;
       password?: string;
       emailVerified?: boolean;
       phoneVerified?: boolean;
@@ -137,7 +137,7 @@ export async function PATCH(
       email: body.email,
       phone: body.phone || null,
       role: body.role as UserRole,
-      status: body.status,
+      status: body.status as UserStatus,
     };
 
     // Handle password reset (Super Admin can reset without old password)
