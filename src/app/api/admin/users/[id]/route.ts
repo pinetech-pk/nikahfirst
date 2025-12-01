@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { BCRYPT } from "@/config/constants";
 
 /**
  * GET /api/admin/users/[id]
@@ -119,16 +121,51 @@ export async function PATCH(
       );
     }
 
+    // Build update data object
+    const updateData: {
+      name: string;
+      email: string;
+      phone: string | null;
+      role: UserRole;
+      status: string;
+      password?: string;
+      emailVerified?: boolean;
+      phoneVerified?: boolean;
+      isVerified?: boolean;
+    } = {
+      name: body.name,
+      email: body.email,
+      phone: body.phone || null,
+      role: body.role as UserRole,
+      status: body.status,
+    };
+
+    // Handle password reset (Super Admin can reset without old password)
+    if (body.newPassword && body.newPassword.trim() !== "") {
+      if (body.newPassword.length < 6) {
+        return NextResponse.json(
+          { error: "Password must be at least 6 characters long" },
+          { status: 400 }
+        );
+      }
+      updateData.password = await bcrypt.hash(body.newPassword, BCRYPT.SALT_ROUNDS);
+    }
+
+    // Handle verification status updates
+    if (typeof body.emailVerified === "boolean") {
+      updateData.emailVerified = body.emailVerified;
+    }
+    if (typeof body.phoneVerified === "boolean") {
+      updateData.phoneVerified = body.phoneVerified;
+    }
+    if (typeof body.isVerified === "boolean") {
+      updateData.isVerified = body.isVerified;
+    }
+
     // Update user
     const updatedUser = await prisma.user.update({
       where: { id },
-      data: {
-        name: body.name,
-        email: body.email,
-        phone: body.phone || null,
-        role: body.role as UserRole,
-        status: body.status,
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,
@@ -138,13 +175,16 @@ export async function PATCH(
         status: true,
         emailVerified: true,
         phoneVerified: true,
+        isVerified: true,
         updatedAt: true,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: "User updated successfully",
+      message: body.newPassword
+        ? "User updated successfully (password changed)"
+        : "User updated successfully",
       user: updatedUser,
     });
   } catch (error) {

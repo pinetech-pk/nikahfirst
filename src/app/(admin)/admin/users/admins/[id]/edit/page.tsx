@@ -32,7 +32,12 @@ import {
   Mail,
   Phone,
   User,
+  Key,
+  Eye,
+  EyeOff,
+  ShieldCheck,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
 
 interface AdminUser {
@@ -44,6 +49,7 @@ interface AdminUser {
   status: string;
   emailVerified: boolean;
   phoneVerified: boolean;
+  isVerified: boolean;
 }
 
 export default function AdminUserEditPage({
@@ -64,8 +70,15 @@ export default function AdminUserEditPage({
     phone: "",
     role: "",
     status: "",
+    newPassword: "",
+    confirmPassword: "",
+    emailVerified: false,
+    phoneVerified: false,
+    isVerified: false,
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [originalData, setOriginalData] = useState<AdminUser | null>(null);
 
   // Fetch admin user data
@@ -89,6 +102,11 @@ export default function AdminUserEditPage({
           phone: data.phone || "",
           role: data.role,
           status: data.status,
+          newPassword: "",
+          confirmPassword: "",
+          emailVerified: data.emailVerified || false,
+          phoneVerified: data.phoneVerified || false,
+          isVerified: data.isVerified || false,
         });
         setOriginalData(data);
         setLoading(false);
@@ -110,11 +128,38 @@ export default function AdminUserEditPage({
     setError("");
     setSuccess("");
 
+    // Validate password if provided
+    if (formData.newPassword) {
+      if (formData.newPassword.length < 6) {
+        setError("Password must be at least 6 characters long");
+        setSaving(false);
+        return;
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        setError("Passwords do not match");
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
+      // Prepare payload (exclude confirmPassword)
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        status: formData.status,
+        emailVerified: formData.emailVerified,
+        phoneVerified: formData.phoneVerified,
+        isVerified: formData.isVerified,
+        ...(formData.newPassword && { newPassword: formData.newPassword }),
+      };
+
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
@@ -123,15 +168,27 @@ export default function AdminUserEditPage({
         throw new Error(data.error || "Failed to update admin user");
       }
 
-      setSuccess("Admin user updated successfully!");
+      setSuccess(
+        formData.newPassword
+          ? "Admin user updated successfully! Password has been changed."
+          : "Admin user updated successfully!"
+      );
+
+      // Clear password fields
+      setFormData((prev) => ({
+        ...prev,
+        newPassword: "",
+        confirmPassword: "",
+      }));
 
       // Redirect after 2 seconds
       setTimeout(() => {
         router.push(`/admin/users/admins/${userId}`);
         router.refresh();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Something went wrong";
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -223,7 +280,7 @@ export default function AdminUserEditPage({
                 <CardHeader>
                   <CardTitle>Basic Information</CardTitle>
                   <CardDescription>
-                    Update the admin user's personal details
+                    Update the admin user&apos;s personal details
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -361,7 +418,7 @@ export default function AdminUserEditPage({
                       <Alert className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-sm">
-                          Changing role will affect the admin's permissions.
+                          Changing role will affect the admin&apos;s permissions.
                           Make sure this is intentional.
                         </AlertDescription>
                       </Alert>
@@ -419,6 +476,236 @@ export default function AdminUserEditPage({
                       </Alert>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Security Settings - Password Reset */}
+              <Card className="border-blue-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Key className="h-5 w-5 text-blue-600" />
+                    Security Settings
+                  </CardTitle>
+                  <CardDescription>
+                    Reset this admin user&apos;s password (no previous password required)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* New Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        id="newPassword"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Leave blank to keep current password"
+                        className="pl-9 pr-10"
+                        value={formData.newPassword}
+                        onChange={(e) =>
+                          setFormData({ ...formData, newPassword: e.target.value })
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Minimum 6 characters. Leave blank if you don&apos;t want to change the password.
+                    </p>
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <div className="relative">
+                      <Key className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Confirm new password"
+                        className="pl-9 pr-10"
+                        value={formData.confirmPassword}
+                        onChange={(e) =>
+                          setFormData({ ...formData, confirmPassword: e.target.value })
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                    {formData.newPassword &&
+                      formData.confirmPassword &&
+                      formData.newPassword !== formData.confirmPassword && (
+                        <p className="text-xs text-red-500 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          Passwords do not match
+                        </p>
+                      )}
+                    {formData.newPassword &&
+                      formData.confirmPassword &&
+                      formData.newPassword === formData.confirmPassword && (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          Passwords match
+                        </p>
+                      )}
+                  </div>
+
+                  {formData.newPassword && (
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <Key className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-sm text-blue-800">
+                        The password will be changed when you save. The admin will need to use the new password for their next login.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Verification Status */}
+              <Card className="border-purple-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-purple-600" />
+                    Verification Status
+                  </CardTitle>
+                  <CardDescription>
+                    Manage verification status for this admin user
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Email Verified */}
+                  <div className="flex items-center justify-between py-3 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Mail className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Email Verified</p>
+                        <p className="text-xs text-gray-500">
+                          {formData.email || "No email set"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="emailVerified"
+                        checked={formData.emailVerified}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, emailVerified: checked })
+                        }
+                      />
+                      <Badge
+                        variant={formData.emailVerified ? "default" : "secondary"}
+                        className={
+                          formData.emailVerified
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-600"
+                        }
+                      >
+                        {formData.emailVerified ? "Verified" : "Not Verified"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Phone Verified */}
+                  <div className="flex items-center justify-between py-3 border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Phone className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Phone Verified</p>
+                        <p className="text-xs text-gray-500">
+                          {formData.phone || "No phone set"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="phoneVerified"
+                        checked={formData.phoneVerified}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, phoneVerified: checked })
+                        }
+                      />
+                      <Badge
+                        variant={formData.phoneVerified ? "default" : "secondary"}
+                        className={
+                          formData.phoneVerified
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-600"
+                        }
+                      >
+                        {formData.phoneVerified ? "Verified" : "Not Verified"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Account Verified (General) */}
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <ShieldCheck className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Account Verified</p>
+                        <p className="text-xs text-gray-500">
+                          General account verification status
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="isVerified"
+                        checked={formData.isVerified}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, isVerified: checked })
+                        }
+                      />
+                      <Badge
+                        variant={formData.isVerified ? "default" : "secondary"}
+                        className={
+                          formData.isVerified
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-600"
+                        }
+                      >
+                        {formData.isVerified ? "Verified" : "Not Verified"}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Show changes warning */}
+                  {originalData && (
+                    (formData.emailVerified !== originalData.emailVerified ||
+                     formData.phoneVerified !== originalData.phoneVerified ||
+                     formData.isVerified !== originalData.isVerified) && (
+                      <Alert className="border-purple-200 bg-purple-50">
+                        <ShieldCheck className="h-4 w-4 text-purple-600" />
+                        <AlertDescription className="text-sm text-purple-800">
+                          Verification status changes will be applied when you save.
+                        </AlertDescription>
+                      </Alert>
+                    )
+                  )}
                 </CardContent>
               </Card>
 
