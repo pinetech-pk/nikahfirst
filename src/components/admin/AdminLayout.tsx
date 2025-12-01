@@ -94,6 +94,11 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/settings/system": { section: "Settings", page: "System Settings" },
   "/admin/settings/permissions": { section: "Settings", page: "Permissions" },
   "/admin/settings/audit": { section: "Settings", page: "Audit Logs" },
+  "/admin/settings/account": { section: "Settings", page: "Account Settings" },
+  "/admin/settings/change-password": {
+    section: "Settings",
+    page: "Change Password",
+  },
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {
