@@ -34,9 +34,20 @@ export default withAuth(
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
 
+      // ==================== PERSONAL ACCOUNT SETTINGS ====================
+      // Account Settings and Change Password - accessible to ALL admin users
+      // These are personal settings, not system settings
+      const personalSettingsPages = [
+        "/admin/settings/account",
+        "/admin/settings/change-password",
+      ];
+      const isPersonalSettingsPage = personalSettingsPages.some(
+        (page) => pathname === page || pathname.startsWith(page + "/")
+      );
+
       // ==================== SUPER ADMIN ONLY ====================
-      // System settings - Super Admin only
-      if (pathname.startsWith("/admin/settings")) {
+      // System settings - Super Admin only (excluding personal settings pages)
+      if (pathname.startsWith("/admin/settings") && !isPersonalSettingsPage) {
         if (!superAdminOnly.includes(token.role as string)) {
           return NextResponse.redirect(new URL("/admin", req.url));
         }
