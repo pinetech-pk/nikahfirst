@@ -1,4 +1,5 @@
 // import { AdminLayout } from "@/components/admin/AdminLayout";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ import {
   TrendingUp,
   UserCheck,
   Diamond,
+  UserPlus,
 } from "lucide-react";
 
 export default function RegularUsersPage() {
@@ -139,13 +141,21 @@ export default function RegularUsersPage() {
     <>
       <div className="space-y-6">
         {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Regular Users Management
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Manage platform members and their profiles
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Regular Users Management
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Manage platform members and their profiles
+            </p>
+          </div>
+          <Link href="/admin/users/regular/create">
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Create User
+            </Button>
+          </Link>
         </div>
 
         {/* Stats Cards */}
