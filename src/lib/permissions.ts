@@ -180,9 +180,10 @@ export function canCreateRole(
     return creatableRoles.includes(targetRole);
   }
 
-  // Supervisor can create lower-level roles
+  // Supervisor can create lower-level roles (including regular users)
   if (currentRole === "SUPERVISOR") {
     const creatableRoles: UserRole[] = [
+      "USER",
       "CONTENT_EDITOR",
       "CONSULTANT",
       "SUPPORT_AGENT",
