@@ -387,13 +387,17 @@ export default function RegularUsersPage() {
                         </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-3 w-3 mr-1" />
-                              View
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              Edit
-                            </Button>
+                            <Link href={`/admin/users/regular/${user.id}`}>
+                              <Button variant="outline" size="sm">
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/users/regular/${user.id}/edit`}>
+                              <Button variant="outline" size="sm">
+                                Edit
+                              </Button>
+                            </Link>
                           </div>
                         </td>
                       </tr>
