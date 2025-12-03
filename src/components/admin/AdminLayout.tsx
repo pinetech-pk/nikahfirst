@@ -88,6 +88,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
     section: "Financial",
     page: "Credits & Wallets",
   },
+  "/admin/users/regular/create": {
+    section: "User Management",
+    page: "Create User",
+  },
   "/admin/support/tickets": { section: "Support", page: "Support Tickets" },
   "/admin/support/complaints": { section: "Support", page: "Complaints" },
   "/admin/support/refunds": { section: "Support", page: "Refund Requests" },
@@ -129,9 +133,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       return { section: "User Management", page: "Admin User Details" };
     }
 
-    // Regular user routes: /admin/users/regular/[id] and /admin/users/regular/[id]/edit
+    // Regular user routes: /admin/users/regular/[id], /admin/users/regular/[id]/edit, /admin/users/regular/[id]/credits
     if (pathname.match(/^\/admin\/users\/regular\/[^/]+\/edit$/)) {
       return { section: "User Management", page: "Edit User" };
+    }
+    if (pathname.match(/^\/admin\/users\/regular\/[^/]+\/credits$/)) {
+      return { section: "User Management", page: "Add Credits" };
     }
     if (pathname.match(/^\/admin\/users\/regular\/[^/]+$/)) {
       return { section: "User Management", page: "User Details" };
