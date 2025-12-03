@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSupervisor } from "@/lib/authMiddleware";
 import { prisma } from "@/lib/prisma";
-import { UserRole, UserStatus } from "@prisma/client";
+import { UserRole, UserStatus, SubscriptionTier } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { BCRYPT } from "@/config/constants";
 
@@ -29,6 +29,7 @@ export async function GET(
         phone: true,
         role: true,
         status: true,
+        subscription: true,
         emailVerified: true,
         phoneVerified: true,
         isVerified: true,
@@ -121,6 +122,22 @@ export async function PATCH(
       );
     }
 
+    // Validate subscription if provided
+    const validSubscriptions: SubscriptionTier[] = [
+      "FREE",
+      "STANDARD",
+      "SILVER",
+      "GOLD",
+      "PLATINUM",
+      "PRO",
+    ];
+    if (body.subscription && !validSubscriptions.includes(body.subscription as SubscriptionTier)) {
+      return NextResponse.json(
+        { error: "Invalid subscription tier" },
+        { status: 400 }
+      );
+    }
+
     // Build update data object
     const updateData: {
       name: string;
@@ -128,6 +145,7 @@ export async function PATCH(
       phone: string | null;
       role: UserRole;
       status: UserStatus;
+      subscription?: SubscriptionTier;
       password?: string;
       emailVerified?: boolean;
       phoneVerified?: boolean;
@@ -139,6 +157,11 @@ export async function PATCH(
       role: body.role as UserRole,
       status: body.status as UserStatus,
     };
+
+    // Handle subscription update
+    if (body.subscription) {
+      updateData.subscription = body.subscription as SubscriptionTier;
+    }
 
     // Handle password reset (Super Admin can reset without old password)
     if (body.newPassword && body.newPassword.trim() !== "") {
@@ -173,6 +196,7 @@ export async function PATCH(
         phone: true,
         role: true,
         status: true,
+        subscription: true,
         emailVerified: true,
         phoneVerified: true,
         isVerified: true,

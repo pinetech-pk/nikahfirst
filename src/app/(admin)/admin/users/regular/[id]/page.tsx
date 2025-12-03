@@ -478,10 +478,12 @@ export default async function RegularUserDetailPage({
                   <CreditCard className="h-4 w-4 mr-2" />
                   Manage Subscription
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Wallet className="h-4 w-4 mr-2" />
-                  Add Credits
-                </Button>
+                <Link href={`/admin/users/regular/${id}/credits`}>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Wallet className="h-4 w-4 mr-2" />
+                    Add Credits
+                  </Button>
+                </Link>
                 <Button variant="outline" className="w-full justify-start">
                   <Activity className="h-4 w-4 mr-2" />
                   View Activity

@@ -35,6 +35,7 @@ import {
   EyeOff,
   ShieldCheck,
   CreditCard,
+  Wallet,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import Link from "next/link";
@@ -851,6 +852,21 @@ export default function RegularUserEditPage({
                       <span>Email changes may require re-verification</span>
                     </li>
                   </ul>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Link href={`/admin/users/regular/${userId}/credits`}>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Add Credits
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
