@@ -12,11 +12,9 @@ interface UserWithProfiles {
   status: string;
   createdAt: Date;
   lastLoginAt: Date | null;
-  profiles: {
-    id: string;
-    city: string | null;
-    country: string | null;
-  }[];
+  _count: {
+    profiles: number;
+  };
 }
 
 /**
@@ -84,11 +82,9 @@ export async function GET() {
           status: true,
           createdAt: true,
           lastLoginAt: true,
-          profiles: {
+          _count: {
             select: {
-              id: true,
-              city: true,
-              country: true,
+              profiles: true,
             },
           },
         },
@@ -99,31 +95,17 @@ export async function GET() {
     ]);
 
     // Format users for the response
-    const formattedUsers = (users as UserWithProfiles[]).map((user) => {
-      // Get location from first profile if available
-      const firstProfile = user.profiles[0];
-      let location = "Not set";
-      if (firstProfile?.city && firstProfile?.country) {
-        location = `${firstProfile.city}, ${firstProfile.country}`;
-      } else if (firstProfile?.city) {
-        location = firstProfile.city;
-      } else if (firstProfile?.country) {
-        location = firstProfile.country;
-      }
-
-      return {
-        id: user.id,
-        name: user.name || "No name",
-        email: user.email,
-        phone: user.phone || "Not set",
-        subscription: user.subscription,
-        profiles: user.profiles.length,
-        joined: user.createdAt,
-        lastActive: user.lastLoginAt,
-        status: user.status,
-        location,
-      };
-    });
+    const formattedUsers = (users as UserWithProfiles[]).map((user) => ({
+      id: user.id,
+      name: user.name || "No name",
+      email: user.email,
+      phone: user.phone || "Not set",
+      subscription: user.subscription,
+      profiles: user._count.profiles,
+      joined: user.createdAt,
+      lastActive: user.lastLoginAt,
+      status: user.status,
+    }));
 
     return NextResponse.json({
       stats: {

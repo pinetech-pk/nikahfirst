@@ -29,7 +29,6 @@ import {
   Mail,
   Phone,
   Calendar,
-  MapPin,
   TrendingUp,
   UserCheck,
   Diamond,
@@ -47,7 +46,6 @@ interface User {
   joined: string;
   lastActive: string | null;
   status: string;
-  location: string;
 }
 
 interface Stats {
@@ -310,9 +308,6 @@ export default function RegularUsersPage() {
                         Subscription
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">
-                        Location
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">
                         Activity
                       </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-700">
@@ -360,12 +355,6 @@ export default function RegularUsersPage() {
                           <Badge {...getSubscriptionBadge(user.subscription)}>
                             {user.subscription}
                           </Badge>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <MapPin className="h-3 w-3" />
-                            {user.location}
-                          </div>
                         </td>
                         <td className="py-4 px-4">
                           <div className="space-y-1">
