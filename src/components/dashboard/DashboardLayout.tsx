@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,21 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
+
+  // Get user info from session
+  const userName = session?.user?.name || "User";
+  const userEmail = session?.user?.email || "";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/login" });
+  };
 
   const navigation = [
     {
@@ -340,11 +356,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     className="flex items-center gap-2 hover:bg-green-50"
                   >
                     <div className="w-8 h-8 rounded-full bg-linear-to-br from-green-500 to-cyan-500 flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                      JD
+                      {userInitials}
                     </div>
                     <div className="text-left hidden md:block">
                       <p className="text-sm font-semibold text-gray-900">
-                        John Doe
+                        {userName}
                       </p>
                       <p className="text-xs text-gray-500">Premium Member</p>
                     </div>
@@ -354,10 +370,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">John Doe</p>
-                      <p className="text-xs text-gray-500">
-                        john.doe@example.com
-                      </p>
+                      <p className="text-sm font-medium">{userName}</p>
+                      <p className="text-xs text-gray-500">{userEmail}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -390,7 +404,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="text-red-600 cursor-pointer focus:text-red-600 focus:bg-red-50"
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </DropdownMenuItem>
