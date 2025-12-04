@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -25,12 +24,175 @@ import {
   Mail,
   Phone,
   Save,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 
+interface UserData {
+  id: string;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+}
+
 export default function SettingsPage() {
-  const { data: session } = useSession();
-  const [showPassword, setShowPassword] = useState(false);
+  // User data state
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Personal info form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isSavingInfo, setIsSavingInfo] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Password form state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("/api/auth/account");
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+          setName(data.name || "");
+          setEmail(data.email || "");
+          setPhone(data.phone || "");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // Handle personal info save
+  const handleSavePersonalInfo = async () => {
+    setIsSavingInfo(true);
+    setInfoMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setInfoMessage({
+          type: "success",
+          text: "Personal information updated successfully!",
+        });
+        // Update local state with new data
+        if (data.user) {
+          setUserData((prev) => (prev ? { ...prev, ...data.user } : null));
+        }
+      } else {
+        setInfoMessage({
+          type: "error",
+          text: data.error || "Failed to update information",
+        });
+      }
+    } catch (error) {
+      setInfoMessage({
+        type: "error",
+        text: "An error occurred. Please try again.",
+      });
+    } finally {
+      setIsSavingInfo(false);
+    }
+  };
+
+  // Handle password change
+  const handleChangePassword = async () => {
+    setPasswordMessage(null);
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "New passwords do not match",
+      });
+      return;
+    }
+
+    // Validate password length
+    if (newPassword.length < 8) {
+      setPasswordMessage({
+        type: "error",
+        text: "Password must be at least 8 characters long",
+      });
+      return;
+    }
+
+    setIsSavingPassword(true);
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPasswordMessage({
+          type: "success",
+          text: "Password changed successfully!",
+        });
+        // Clear password fields
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } else {
+        setPasswordMessage({
+          type: "error",
+          text: data.error || "Failed to change password",
+        });
+      }
+    } catch (error) {
+      setPasswordMessage({
+        type: "error",
+        text: "An error occurred. Please try again.",
+      });
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -71,13 +233,30 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {infoMessage && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg ${
+                    infoMessage.type === "success"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {infoMessage.type === "success" ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  {infoMessage.text}
+                </div>
+              )}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
                     placeholder="Your full name"
-                    defaultValue={session?.user?.name || ""}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -89,7 +268,8 @@ export default function SettingsPage() {
                       type="email"
                       className="pl-10"
                       placeholder="your@email.com"
-                      defaultValue={session?.user?.email || ""}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
                 </div>
@@ -103,15 +283,25 @@ export default function SettingsPage() {
                     type="tel"
                     className="pl-10"
                     placeholder="+92 300 1234567"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
                 <p className="text-xs text-gray-500">
                   Your phone number is used for account recovery and verification
                 </p>
               </div>
-              <Button className="bg-green-600 hover:bg-green-700">
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
+              <Button
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleSavePersonalInfo}
+                disabled={isSavingInfo}
+              >
+                {isSavingInfo ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                {isSavingInfo ? "Saving..." : "Save Changes"}
               </Button>
             </CardContent>
           </Card>
@@ -128,20 +318,38 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {passwordMessage && (
+                <div
+                  className={`flex items-center gap-2 p-3 rounded-lg ${
+                    passwordMessage.type === "success"
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {passwordMessage.type === "success" ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  {passwordMessage.text}
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
                 <div className="relative">
                   <Input
                     id="currentPassword"
-                    type={showPassword ? "text" : "password"}
+                    type={showCurrentPassword ? "text" : "password"}
                     placeholder="Enter current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? (
+                    {showCurrentPassword ? (
                       <EyeOff className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
@@ -157,6 +365,8 @@ export default function SettingsPage() {
                       id="newPassword"
                       type={showNewPassword ? "text" : "password"}
                       placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                     />
                     <button
                       type="button"
@@ -177,15 +387,25 @@ export default function SettingsPage() {
                     id="confirmPassword"
                     type="password"
                     placeholder="Confirm new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
                   />
                 </div>
               </div>
               <p className="text-xs text-gray-500">
                 Password must be at least 8 characters with uppercase, lowercase, and numbers
               </p>
-              <Button variant="outline">
-                <Lock className="h-4 w-4 mr-2" />
-                Update Password
+              <Button
+                variant="outline"
+                onClick={handleChangePassword}
+                disabled={isSavingPassword || !currentPassword || !newPassword || !confirmPassword}
+              >
+                {isSavingPassword ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Lock className="h-4 w-4 mr-2" />
+                )}
+                {isSavingPassword ? "Updating..." : "Update Password"}
               </Button>
             </CardContent>
           </Card>
