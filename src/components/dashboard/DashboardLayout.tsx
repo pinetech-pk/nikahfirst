@@ -376,31 +376,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard/profile" className="cursor-pointer">
-                      <User className="w-4 h-4 mr-2" />
-                      My Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/dashboard/settings" className="cursor-pointer">
                       <Settings className="w-4 h-4 mr-2" />
-                      Settings
+                      Settings & Privacy
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href="/dashboard/subscription"
-                      className="cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Subscription
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard/help" className="cursor-pointer">
                       <HelpCircle className="w-4 h-4 mr-2" />
-                      Help Center
+                      Help & Support
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
