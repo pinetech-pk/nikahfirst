@@ -21,7 +21,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <Logo size="normal" className="text-white mb-4" />
+            <Logo size="md" variant="dark" className="mb-4" />
             <p className="text-sm leading-relaxed mb-4">
               Trusted matrimonial platform connecting Pakistani and Muslim
               families worldwide with privacy and dignity.
@@ -83,9 +83,22 @@ export function Footer() {
       <div className="border-t border-slate-800">
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-center sm:text-left">
-              © {currentYear} NikahFirst. All rights reserved.
-            </p>
+            <div className="text-center sm:text-left">
+              <p className="text-sm">
+                © {currentYear} NikahFirst. All rights reserved.
+              </p>
+              <p className="text-sm text-slate-400 mt-1">
+                Designed & Developed by{" "}
+                <a
+                  href="https://www.pinetech.pk/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Pinetech - Web Studio
+                </a>
+              </p>
+            </div>
             <div className="flex gap-6 text-sm">
               <Link
                 href="/privacy"
