@@ -66,14 +66,6 @@ export default async function ProfileReviewPage({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Name
-                </p>
-                <p>
-                  {profile.firstName} {profile.lastName}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
                   Profile For
                 </p>
                 <p>{profile.profileFor}</p>
@@ -94,17 +86,21 @@ export default async function ProfileReviewPage({
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Location
-                </p>
-                <p>
-                  {profile.city}, {profile.country}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
                   Marital Status
                 </p>
                 <p>{profile.maritalStatus || "Not specified"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Status
+                </p>
+                <p>{profile.isPublished ? "Approved" : "Pending Review"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Verified
+                </p>
+                <p>{profile.isVerified ? "Yes" : "No"}</p>
               </div>
             </div>
 
@@ -116,20 +112,6 @@ export default async function ProfileReviewPage({
                 <p className="whitespace-pre-wrap">{profile.bio}</p>
               </div>
             )}
-
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">
-                Education
-              </p>
-              <p>{profile.education || "Not specified"}</p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">
-                Profession
-              </p>
-              <p>{profile.profession || "Not specified"}</p>
-            </div>
           </CardContent>
         </Card>
 
