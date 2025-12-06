@@ -15,17 +15,16 @@ export async function POST(req: Request) {
     const data = await req.json();
 
     // Create profile with user association
+    // Note: This is a minimal profile creation. Full profile details
+    // will be added via the multi-step profile form in a future update.
     const profile = await prisma.profile.create({
       data: {
         userId: session.user.id,
         profileFor: data.profileFor,
-        firstName: data.firstName,
-        lastName: data.lastName,
         gender: data.gender,
         dateOfBirth: new Date(data.dateOfBirth),
-        bio: data.bio,
-        city: data.city,
-        country: data.country || DEFAULTS.COUNTRY,
+        maritalStatus: data.maritalStatus || "NEVER_MARRIED",
+        bio: data.bio || null,
       },
     });
 

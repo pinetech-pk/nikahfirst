@@ -10,10 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 2;
 
 export default function CreateProfilePage() {
   const router = useRouter();
@@ -31,13 +31,10 @@ export default function CreateProfilePage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     profileFor: "",
-    firstName: "",
-    lastName: "",
     gender: "",
     dateOfBirth: "",
+    maritalStatus: "NEVER_MARRIED",
     bio: "",
-    city: "",
-    country: "Pakistan",
   });
 
   const updateFormData = (field: string, value: string) => {
@@ -64,7 +61,7 @@ export default function CreateProfilePage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message); // You can replace with toast
+        alert(data.message);
         router.push("/dashboard");
       } else {
         alert(data.error);
@@ -87,7 +84,7 @@ export default function CreateProfilePage() {
           <Progress value={(step / TOTAL_STEPS) * 100} className="mt-4" />
         </CardHeader>
         <CardContent>
-          {/* Step 1: Profile For */}
+          {/* Step 1: Basic Information */}
           {step === 1 && (
             <div className="space-y-4">
               <div>
@@ -123,38 +120,6 @@ export default function CreateProfilePage() {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="flex justify-end">
-                <Button onClick={nextStep} disabled={!formData.profileFor}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Basic Information */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      updateFormData("firstName", e.target.value)
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) => updateFormData("lastName", e.target.value)}
-                  />
-                </div>
-              </div>
 
               <div>
                 <Label>Gender</Label>
@@ -187,14 +152,29 @@ export default function CreateProfilePage() {
                 />
               </div>
 
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={prevStep}>
-                  Previous
-                </Button>
+              <div>
+                <Label htmlFor="maritalStatus">Marital Status</Label>
+                <Select
+                  value={formData.maritalStatus}
+                  onValueChange={(value) => updateFormData("maritalStatus", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select marital status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NEVER_MARRIED">Never Married</SelectItem>
+                    <SelectItem value="DIVORCED">Divorced</SelectItem>
+                    <SelectItem value="WIDOWED">Widowed</SelectItem>
+                    <SelectItem value="SEPARATED">Separated</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end">
                 <Button
                   onClick={nextStep}
                   disabled={
-                    !formData.firstName ||
+                    !formData.profileFor ||
                     !formData.gender ||
                     !formData.dateOfBirth
                   }
@@ -205,8 +185,8 @@ export default function CreateProfilePage() {
             </div>
           )}
 
-          {/* Step 3: Additional Details */}
-          {step === 3 && (
+          {/* Step 2: Bio */}
+          {step === 2 && (
             <div className="space-y-4">
               <div>
                 <Label htmlFor="bio">About</Label>
@@ -215,39 +195,11 @@ export default function CreateProfilePage() {
                   placeholder="Tell us about yourself/the person..."
                   value={formData.bio}
                   onChange={(e) => updateFormData("bio", e.target.value)}
-                  rows={4}
+                  rows={6}
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  placeholder="e.g., Karachi, Lahore, Islamabad"
-                  value={formData.city}
-                  onChange={(e) => updateFormData("city", e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Select
-                  value={formData.country}
-                  onValueChange={(value) => updateFormData("country", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pakistan">Pakistan</SelectItem>
-                    <SelectItem value="India">India</SelectItem>
-                    <SelectItem value="UAE">UAE</SelectItem>
-                    <SelectItem value="Saudi Arabia">Saudi Arabia</SelectItem>
-                    <SelectItem value="UK">United Kingdom</SelectItem>
-                    <SelectItem value="USA">United States</SelectItem>
-                    <SelectItem value="Canada">Canada</SelectItem>
-                  </SelectContent>
-                </Select>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Write a brief description about yourself or the person this profile is for.
+                </p>
               </div>
 
               <div className="flex justify-between">
@@ -255,7 +207,7 @@ export default function CreateProfilePage() {
                   Previous
                 </Button>
                 <Button onClick={handleSubmit} disabled={loading}>
-                  {loading ? "Creating..." : "Complete Profile"}
+                  {loading ? "Creating..." : "Create Profile"}
                 </Button>
               </div>
             </div>
