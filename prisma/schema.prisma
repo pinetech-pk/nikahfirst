@@ -5,11 +5,15 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED") // For migrations (direct connection)
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
-// ==================== AUTH & USERS ====================
+// ============================================================================
+// SECTION 1: AUTH & USERS
+// ============================================================================
+
 model User {
+<<<<<<< HEAD
   id            String    @id @default(cuid())
   email         String    @unique
   phone         String?   @unique
@@ -31,15 +35,42 @@ model User {
   fundingWallet FundingWallet?
   transactions  Transaction[]
 
+=======
+  id                  String            @id @default(cuid())
+  email               String            @unique
+  phone               String?           @unique
+  password            String
+  name                String?           // Contact person name
+  isVerified          Boolean           @default(false)
+  emailVerified       Boolean           @default(false)
+  phoneVerified       Boolean           @default(false)
+  role                UserRole          @default(USER)
+  status              UserStatus        @default(ACTIVE)
+  
+  // Subscription & Limits
+  subscription        SubscriptionTier  @default(FREE)
+  subscriptionExpiry  DateTime?
+  profileLimit        Int               @default(1) // Max profiles user can create
+  
+  // Relationships
+  profiles            Profile[]
+  redeemWallet        RedeemWallet?
+  fundingWallet       FundingWallet?
+  transactions        Transaction[]
+  fieldSuggestions    FieldSuggestion[] @relation("UserSuggestions")
+  reviewedSuggestions FieldSuggestion[] @relation("ReviewedSuggestions")
+  
+>>>>>>> main
   // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime?
-  deletedAt     DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  lastLoginAt         DateTime?
+  deletedAt           DateTime?
 
-  @@map("users") // PostgreSQL table naming convention
+  @@map("users")
 }
 
+<<<<<<< HEAD
 // ==================== LOOKUP TABLES ====================
 
 // Geographic Hierarchy: Origin -> Country -> StateProvince -> City
@@ -411,10 +442,134 @@ model Profile {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+=======
+// ============================================================================
+// SECTION 2: PROFILES (MATRIMONIAL)
+// ============================================================================
+
+model Profile {
+  id                  String            @id @default(cuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // ==================== BASIC INFO ====================
+  profileFor          ProfileFor
+  gender              Gender
+  dateOfBirth         DateTime
+  maritalStatus       MaritalStatus
+  numberOfChildren    Int               @default(0)
+  childrenLivingWith  String?           @db.VarChar(50) // Max 50 chars
+  
+  // ==================== ORIGIN & ETHNICITY ====================
+  originId            String?
+  origin              Origin?           @relation(fields: [originId], references: [id])
+  
+  ethnicityId         String?
+  ethnicity           Ethnicity?        @relation(fields: [ethnicityId], references: [id])
+  
+  casteId             String?
+  caste               Caste?            @relation(fields: [casteId], references: [id])
+  
+  // Custom values (pending admin approval)
+  customCaste         String?           @db.VarChar(50)
+  
+  // ==================== RESIDENTIAL STATUS ====================
+  countryOfOriginId   String?
+  countryOfOrigin     Country?          @relation("CountryOfOrigin", fields: [countryOfOriginId], references: [id])
+  
+  countryLivingInId   String?
+  countryLivingIn     Country?          @relation("CountryLivingIn", fields: [countryLivingInId], references: [id])
+  
+  stateProvinceId     String?
+  stateProvince       StateProvince?    @relation(fields: [stateProvinceId], references: [id])
+  
+  cityId              String?
+  city                City?             @relation(fields: [cityId], references: [id])
+  
+  visaStatus          VisaStatus?       // Only if origin != living country
+  
+  // ==================== RELIGIOUS SECT ====================
+  sectId              String?
+  sect                Sect?             @relation(fields: [sectId], references: [id])
+  
+  maslakId            String?
+  maslak              Maslak?           @relation(fields: [maslakId], references: [id])
+  
+  // ==================== FAMILY STATUS ====================
+  religiousBelonging  ReligiousBelonging?
+  socialStatus        SocialStatus?
+  numberOfBrothers    Int               @default(0)
+  numberOfSisters     Int               @default(0)
+  marriedBrothers     Int               @default(0)
+  marriedSisters      Int               @default(0)
+  fatherOccupation    String?           @db.VarChar(50) // Optional, max 50 chars
+  propertyOwnership   String?           @db.VarChar(50) // Optional, max 50 chars
+  
+  // ==================== PHYSICAL ATTRIBUTES ====================
+  heightId            String?
+  height              Height?           @relation(fields: [heightId], references: [id])
+  
+  complexion          Complexion?
+  hasDisability       Boolean           @default(false)
+  disabilityDetails   String?           @db.VarChar(100)
+  
+  // ==================== QUALIFICATIONS ====================
+  educationLevelId    String?
+  educationLevel      EducationLevel?   @relation(fields: [educationLevelId], references: [id])
+  
+  educationFieldId    String?
+  educationField      EducationField?   @relation(fields: [educationFieldId], references: [id])
+  
+  educationDetails    String?           @db.VarChar(100) // Optional details
+  
+  // ==================== CAREER ====================
+  occupationType      OccupationType?
+  occupationDetails   String?           @db.VarChar(100) // Area of expertise
+  
+  incomeRangeId       String?
+  incomeRange         IncomeRange?      @relation(fields: [incomeRangeId], references: [id])
+  
+  // ==================== LANGUAGE ====================
+  motherTongueId      String?
+  motherTongue        Language?         @relation(fields: [motherTongueId], references: [id])
+  
+  // ==================== PROFILE CONTENT ====================
+  bio                 String?           @db.Text // About me
+  
+  // ==================== PRIVACY & VISIBILITY ====================
+  isActive            Boolean           @default(true)
+  isPublished         Boolean           @default(false)
+  visibility          ProfileVisibility @default(VISIBLE)
+  showIncome          Boolean           @default(false) // Show income to connections only
+  
+  // ==================== VERIFICATION ====================
+  isVerified          Boolean           @default(false)
+  verificationLevel   Int               @default(0) // 0-5 levels
+  
+  // ==================== ANALYTICS ====================
+  profileViews        Int               @default(0)
+  uniqueVisitors      Int               @default(0)
+  interestsReceived   Int               @default(0)
+  interestsSent       Int               @default(0)
+  profileCompletion   Int               @default(0) // Percentage 0-100
+  lastActiveAt        DateTime          @default(now())
+  
+  // ==================== RELATIONSHIPS ====================
+  photos              Photo[]
+  sentConnections     Connection[]      @relation("SentConnections")
+  receivedConnections Connection[]      @relation("ReceivedConnections")
+  profileVisitors     ProfileVisitor[]
+  
+  // ==================== TIMESTAMPS ====================
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+>>>>>>> main
   @@index([userId])
   @@index([gender, isPublished, isActive])
   @@index([originId])
   @@index([ethnicityId])
+<<<<<<< HEAD
   @@index([livingCountryId])
   @@index([livingCityId])
   @@index([sectId])
@@ -437,23 +592,79 @@ model ProfileVisitor {
 }
 
 // ==================== PHOTOS ====================
+=======
+  @@index([countryLivingInId])
+  @@index([educationLevelId])
+  @@index([createdAt])
+  @@map("profiles")
+}
+
+// ============================================================================
+// SECTION 3: PHOTOS
+// ============================================================================
+
+>>>>>>> main
 model Photo {
-  id          String    @id @default(cuid())
-  profileId   String
-  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  url         String
-  isMain      Boolean   @default(false)
-  isPublic    Boolean   @default(true)
-  isVerified  Boolean   @default(false)
-  order       Int       @default(0)
-  createdAt   DateTime  @default(now())
+  id                  String            @id @default(cuid())
+  profileId           String
+  profile             Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  // Cloudinary URLs
+  publicId            String            // Cloudinary public_id
+  originalUrl         String            // Authenticated URL for connections
+  blurredUrl          String            // Blurred URL for public view
+  thumbnailUrl        String?           // Small thumbnail
+  
+  // Metadata
+  isPrimary           Boolean           @default(false)
+  sortOrder           Int               @default(0)
+  status              PhotoStatus       @default(PENDING)
+  
+  // Moderation
+  moderatedAt         DateTime?
+  moderatedBy         String?
+  rejectionReason     String?
+  
+  // Timestamps
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   @@index([profileId])
+  @@index([status])
   @@map("photos")
 }
 
-// ==================== CONNECTIONS ====================
+// ============================================================================
+// SECTION 4: PROFILE VISITORS (Analytics)
+// ============================================================================
+
+model ProfileVisitor {
+  id                  String            @id @default(cuid())
+  profileId           String
+  profile             Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  visitorProfileId    String            // Who viewed
+  visitorUserId       String            // User who viewed
+  
+  isRevealed          Boolean           @default(false) // Did owner pay to reveal?
+  revealedAt          DateTime?
+  creditsUsed         Int               @default(0)
+  
+  viewedAt            DateTime          @default(now())
+
+  @@unique([profileId, visitorProfileId])
+  @@index([profileId])
+  @@index([visitorProfileId])
+  @@index([viewedAt])
+  @@map("profile_visitors")
+}
+
+// ============================================================================
+// SECTION 5: CONNECTIONS
+// ============================================================================
+
 model Connection {
+<<<<<<< HEAD
   id          String    @id @default(cuid())
 
   senderId    String
@@ -473,6 +684,26 @@ model Connection {
   updatedAt   DateTime  @updatedAt
   respondedAt DateTime?
 
+=======
+  id                  String            @id @default(cuid())
+  
+  senderId            String
+  sender              Profile           @relation("SentConnections", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId          String
+  receiver            Profile           @relation("ReceivedConnections", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  status              ConnectionStatus  @default(PENDING)
+  message             String?           @db.Text
+  
+  creditsUsed         Int               @default(1)
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  respondedAt         DateTime?
+  expiresAt           DateTime?         // Connection request expiry
+  
+>>>>>>> main
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
@@ -480,39 +711,400 @@ model Connection {
   @@map("connections")
 }
 
-// ==================== WALLETS ====================
+// ============================================================================
+// SECTION 6: LOOKUP TABLES - ORIGIN & ETHNICITY
+// ============================================================================
+
+model Origin {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  label               String
+  labelNative         String?
+  emoji               String?
+  description         String?
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  ethnicities         Ethnicity[]
+  incomeRanges        IncomeRange[]
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("origins")
+}
+
+model Ethnicity {
+  id                  String            @id @default(cuid())
+  originId            String
+  origin              Origin            @relation(fields: [originId], references: [id], onDelete: Cascade)
+  
+  slug                String
+  label               String
+  labelNative         String?
+  sortOrder           Int               @default(0)
+  isPopular           Boolean           @default(false)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  castes              Caste[]
+  languages           EthnicityLanguage[]
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([originId, slug])
+  @@index([originId])
+  @@map("ethnicities")
+}
+
+model Caste {
+  id                  String            @id @default(cuid())
+  ethnicityId         String
+  ethnicity           Ethnicity         @relation(fields: [ethnicityId], references: [id], onDelete: Cascade)
+  
+  slug                String
+  label               String
+  labelNative         String?
+  sortOrder           Int               @default(0)
+  isPopular           Boolean           @default(false)
+  isActive            Boolean           @default(true)
+  usageCount          Int               @default(0) // Track popularity
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([ethnicityId, slug])
+  @@index([ethnicityId])
+  @@map("castes")
+}
+
+// ============================================================================
+// SECTION 7: LOOKUP TABLES - LOCATION
+// ============================================================================
+
+model Country {
+  id                  String            @id @default(cuid())
+  code                String            @unique // ISO 3166-1 alpha-2 (PK, IN, US)
+  name                String
+  nameNative          String?
+  phoneCode           String?           // +92, +1, etc.
+  currency            String?           // PKR, INR, USD
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  statesProvinces     StateProvince[]
+  profilesOrigin      Profile[]         @relation("CountryOfOrigin")
+  profilesLiving      Profile[]         @relation("CountryLivingIn")
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("countries")
+}
+
+model StateProvince {
+  id                  String            @id @default(cuid())
+  countryId           String
+  country             Country           @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  
+  code                String?
+  name                String
+  nameNative          String?
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  cities              City[]
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([countryId, name])
+  @@index([countryId])
+  @@map("states_provinces")
+}
+
+model City {
+  id                  String            @id @default(cuid())
+  stateProvinceId     String
+  stateProvince       StateProvince     @relation(fields: [stateProvinceId], references: [id], onDelete: Cascade)
+  
+  name                String
+  nameNative          String?
+  sortOrder           Int               @default(0)
+  isPopular           Boolean           @default(false) // Major cities
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([stateProvinceId, name])
+  @@index([stateProvinceId])
+  @@map("cities")
+}
+
+// ============================================================================
+// SECTION 8: LOOKUP TABLES - RELIGIOUS SECT
+// ============================================================================
+
+model Sect {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  label               String
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  maslaks             Maslak[]
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("sects")
+}
+
+model Maslak {
+  id                  String            @id @default(cuid())
+  sectId              String
+  sect                Sect              @relation(fields: [sectId], references: [id], onDelete: Cascade)
+  
+  slug                String
+  label               String
+  description         String?
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([sectId, slug])
+  @@index([sectId])
+  @@map("maslaks")
+}
+
+// ============================================================================
+// SECTION 9: LOOKUP TABLES - EDUCATION
+// ============================================================================
+
+model EducationLevel {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  label               String
+  level               Int               // 1-9 for filtering (higher = more education)
+  yearsOfEducation    Int               // 10, 12, 14, 16, 18, etc.
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Auto-tags for search
+  tags                String[]          @default([])
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("education_levels")
+}
+
+model EducationField {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  label               String
+  category            String?           // "Islamic", "Social Science", "Natural Science", "Applied Science"
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Auto-tags for search
+  tags                String[]          @default([])
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("education_fields")
+}
+
+// ============================================================================
+// SECTION 10: LOOKUP TABLES - INCOME
+// ============================================================================
+
+model IncomeRange {
+  id                  String            @id @default(cuid())
+  originId            String?           // Null = global, otherwise origin-specific
+  origin              Origin?           @relation(fields: [originId], references: [id], onDelete: Cascade)
+  
+  slug                String
+  label               String            // "75k - 125k PKR"
+  currency            String            // PKR, USD, GBP, etc.
+  period              IncomePeriod      // MONTHLY, ANNUAL
+  minValue            Int?              // For filtering/sorting
+  maxValue            Int?
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([originId, slug])
+  @@index([originId])
+  @@map("income_ranges")
+}
+
+// ============================================================================
+// SECTION 11: LOOKUP TABLES - PHYSICAL
+// ============================================================================
+
+model Height {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  labelImperial       String            // 5'6"
+  labelMetric         String            // 168 cm
+  centimeters         Int               // For filtering
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("heights")
+}
+
+// ============================================================================
+// SECTION 12: LOOKUP TABLES - LANGUAGE
+// ============================================================================
+
+model Language {
+  id                  String            @id @default(cuid())
+  code                String            @unique // ISO 639-1
+  slug                String            @unique
+  label               String
+  labelNative         String?
+  sortOrder           Int               @default(0)
+  isActive            Boolean           @default(true)
+  
+  // Relations
+  ethnicities         EthnicityLanguage[]
+  profiles            Profile[]
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("languages")
+}
+
+// Junction table for Ethnicity <-> Language
+model EthnicityLanguage {
+  id                  String            @id @default(cuid())
+  ethnicityId         String
+  ethnicity           Ethnicity         @relation(fields: [ethnicityId], references: [id], onDelete: Cascade)
+  languageId          String
+  language            Language          @relation(fields: [languageId], references: [id], onDelete: Cascade)
+  
+  isPrimary           Boolean           @default(false)
+  
+  @@unique([ethnicityId, languageId])
+  @@map("ethnicity_languages")
+}
+
+// ============================================================================
+// SECTION 13: USER SUGGESTIONS SYSTEM
+// ============================================================================
+
+model FieldSuggestion {
+  id                  String            @id @default(cuid())
+  
+  // What type of suggestion
+  fieldType           SuggestionFieldType
+  
+  // Context (which origin/ethnicity it belongs to)
+  originId            String?
+  ethnicityId         String?
+  
+  // The suggestion
+  suggestedValue      String
+  suggestedLabel      String?
+  additionalInfo      String?           @db.Text
+  
+  // Who suggested
+  userId              String
+  user                User              @relation("UserSuggestions", fields: [userId], references: [id])
+  
+  // Review status
+  status              SuggestionStatus  @default(PENDING)
+  reviewedById        String?
+  reviewedBy          User?             @relation("ReviewedSuggestions", fields: [reviewedById], references: [id])
+  reviewNote          String?
+  reviewedAt          DateTime?
+  
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([status])
+  @@index([fieldType])
+  @@map("field_suggestions")
+}
+
+// ============================================================================
+// SECTION 14: WALLETS & TRANSACTIONS
+// ============================================================================
+
 model RedeemWallet {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance       Int       @default(0)
-  frozenBalance Int       @default(0)
-  limit         Int
-  lastRedeemed  DateTime  @default(now())
-  nextRedemption DateTime
-  creditsWasted Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance             Int               @default(0)
+  frozenBalance       Int               @default(0)
+  limit               Int
+  lastRedeemed        DateTime          @default(now())
+  nextRedemption      DateTime
+  creditsWasted       Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   @@map("redeem_wallets")
 }
 
 model FundingWallet {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  balance       Int       @default(0)
-  frozenBalance Int       @default(0)
-  totalPurchased Int      @default(0)
-  totalSpent    Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance             Int               @default(0)
+  frozenBalance       Int               @default(0)
+  totalPurchased      Int               @default(0)
+  totalSpent          Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
 
   @@map("funding_wallets")
 }
 
-// ==================== TRANSACTIONS ====================
 model Transaction {
+<<<<<<< HEAD
   id            String    @id @default(cuid())
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -527,6 +1119,26 @@ model Transaction {
   paymentId     String?
 
   createdAt     DateTime  @default(now())
+=======
+  id                  String            @id @default(cuid())
+  userId              String
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type                TransactionType
+  walletType          WalletType
+  amount              Int
+  description         String
+  
+  // For purchases
+  paymentMethod       String?
+  paymentId           String?
+  
+  // Reference
+  referenceType       String?           // "connection", "reveal_visitor", etc.
+  referenceId         String?           // ID of related entity
+  
+  createdAt           DateTime          @default(now())
+>>>>>>> main
 
   @@index([userId])
   @@index([type])
@@ -534,7 +1146,10 @@ model Transaction {
   @@map("transactions")
 }
 
-// ==================== ENUMS ====================
+// ============================================================================
+// SECTION 15: ENUMS
+// ============================================================================
+
 enum UserRole {
   USER
   SUPPORT_AGENT
@@ -567,20 +1182,79 @@ enum ProfileFor {
   BROTHER
   SISTER
   RELATIVE
+  FRIEND
   CLIENT
+  OTHER
 }
 
 enum Gender {
-  MALE
-  FEMALE
+  MALE    // Groom
+  FEMALE  // Bride
 }
 
 enum MaritalStatus {
   NEVER_MARRIED
   DIVORCED
   WIDOWED
+<<<<<<< HEAD
   SEPARATED
   ANNULLED
+=======
+  MARRIED  // Only for Groom (polygamy)
+}
+
+enum VisaStatus {
+  CITIZEN
+  PERMANENT_RESIDENT
+  WORK_VISA
+  STUDENT_VISA
+  VISIT_VISA
+  REFUGEE
+  OTHER
+}
+
+enum ReligiousBelonging {
+  STRICT
+  INCLINED
+  MODERATE
+  LIBERAL
+}
+
+enum SocialStatus {
+  ELITE_CLASS
+  ESTABLISHED_MIDDLE
+  TECHNICALLY_MIDDLE
+  AFFLUENT_WORKING
+  TRADITIONAL_WORKING
+}
+
+enum Complexion {
+  VERY_FAIR
+  MEDIUM_FAIR
+  TAN_WHEATISH    // Sanwla
+  DARK
+}
+
+enum OccupationType {
+  SELF_EMPLOYED
+  PRIVATE_JOB
+  GOVERNMENT_JOB
+  ARMED_FORCES
+  NOT_WORKING
+  STUDENT
+  RETIRED
+}
+
+enum IncomePeriod {
+  MONTHLY
+  ANNUAL
+}
+
+enum PhotoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+>>>>>>> main
 }
 
 enum ProfileVisibility {
@@ -595,6 +1269,23 @@ enum ConnectionStatus {
   REJECTED
   EXPIRED
   BLOCKED
+  WITHDRAWN
+}
+
+enum SuggestionFieldType {
+  CASTE
+  ETHNICITY
+  CITY
+  EDUCATION_FIELD
+  OTHER
+}
+
+enum SuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DUPLICATE
+  MERGED
 }
 
 enum TransactionType {
