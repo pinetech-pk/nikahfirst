@@ -291,45 +291,61 @@ export default async function DashboardPage() {
           <Card>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-100">
-                {profiles.map((profile) => (
-                  <div
-                    key={profile.id}
-                    className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                        <User className="h-6 w-6 text-gray-500" />
+                {profiles.map((profile) => {
+                  // Calculate age from dateOfBirth
+                  const birthDate = new Date(profile.dateOfBirth);
+                  const today = new Date();
+                  let age = today.getFullYear() - birthDate.getFullYear();
+                  const monthDiff = today.getMonth() - birthDate.getMonth();
+                  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                  }
+
+                  return (
+                    <div
+                      key={profile.id}
+                      className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                          <User className="h-6 w-6 text-gray-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {profile.profileFor === "SELF" ? "My Profile" : `Profile for ${profile.profileFor.charAt(0) + profile.profileFor.slice(1).toLowerCase()}`}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {profile.gender === "MALE" ? "Male" : "Female"} • {age} years old
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {profile.firstName} {profile.lastName || ""}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Profile for: {profile.profileFor} {profile.city ? `| ${profile.city}` : ""}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        {profile.isVerified && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            <BadgeCheck className="h-3 w-3 mr-1" />
+                            Verified
+                          </span>
+                        )}
+                        {profile.isPublished ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            <BadgeCheck className="h-3 w-3 mr-1" />
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pending Approval
+                          </span>
+                        )}
+                        <Link href={`/dashboard/profile/${profile.id}`}>
+                          <Button variant="outline" size="sm">
+                            View Profile
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {profile.isVerified && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                          <BadgeCheck className="h-3 w-3 mr-1" />
-                          Verified
-                        </span>
-                      )}
-                      {!profile.isPublished && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Pending
-                        </span>
-                      )}
-                      <Link href={`/dashboard/profile/${profile.id}`}>
-                        <Button variant="outline" size="sm">
-                          View Profile
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
