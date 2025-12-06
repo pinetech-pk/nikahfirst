@@ -112,11 +112,16 @@ export default async function DashboardPage() {
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Credits Card */}
+        {/* Credits Card with Top Up */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Credits</CardTitle>
-            <CreditCard className="h-5 w-5 text-gray-400" />
+            <Link href="/dashboard/topup">
+              <Button variant="ghost" size="sm" className="h-7 text-xs text-green-600 hover:text-green-700 hover:bg-green-50">
+                <Plus className="h-3 w-3 mr-1" />
+                Top up
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-gray-900">{totalCredits}</div>
@@ -158,24 +163,7 @@ export default async function DashboardPage() {
       {/* Activity Stats Row */}
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Activity Overview</h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {/* Credits with Top Up */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <CreditCard className="h-8 w-8 text-gray-400" />
-                <Link href="/dashboard/subscription">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs text-gray-500 hover:text-gray-700">
-                    <Plus className="h-3 w-3 mr-1" />
-                    Top up
-                  </Button>
-                </Link>
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{totalCredits}</div>
-              <p className="text-xs text-gray-500">Credits</p>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* New Connections */}
           <Card className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
