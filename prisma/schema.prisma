@@ -13,29 +13,6 @@ datasource db {
 // ============================================================================
 
 model User {
-<<<<<<< HEAD
-  id            String    @id @default(cuid())
-  email         String    @unique
-  phone         String?   @unique
-  password      String
-  name          String?
-  isVerified    Boolean   @default(false)
-  emailVerified Boolean   @default(false)
-  phoneVerified Boolean   @default(false)
-  role          UserRole  @default(USER)
-  status        UserStatus @default(ACTIVE)
-
-  // Subscription & Credits
-  subscription  SubscriptionTier @default(FREE)
-  subscriptionExpiry DateTime?
-
-  // Relationships
-  profiles      Profile[]
-  redeemWallet  RedeemWallet?
-  fundingWallet FundingWallet?
-  transactions  Transaction[]
-
-=======
   id                  String            @id @default(cuid())
   email               String            @unique
   phone               String?           @unique
@@ -60,7 +37,6 @@ model User {
   fieldSuggestions    FieldSuggestion[] @relation("UserSuggestions")
   reviewedSuggestions FieldSuggestion[] @relation("ReviewedSuggestions")
   
->>>>>>> main
   // Timestamps
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
@@ -70,379 +46,6 @@ model User {
   @@map("users")
 }
 
-<<<<<<< HEAD
-// ==================== LOOKUP TABLES ====================
-
-// Geographic Hierarchy: Origin -> Country -> StateProvince -> City
-model Origin {
-  id          String      @id @default(cuid())
-  name        String      @unique
-  code        String?     @unique
-  isActive    Boolean     @default(true)
-  sortOrder   Int         @default(0)
-  ethnicities Ethnicity[]
-  profiles    Profile[]   @relation("ProfileOrigin")
-  createdAt   DateTime    @default(now())
-
-  @@map("origins")
-}
-
-model Ethnicity {
-  id          String    @id @default(cuid())
-  name        String
-  originId    String
-  origin      Origin    @relation(fields: [originId], references: [id], onDelete: Cascade)
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  castes      Caste[]
-  profiles    Profile[] @relation("ProfileEthnicity")
-  createdAt   DateTime  @default(now())
-
-  @@unique([name, originId])
-  @@index([originId])
-  @@map("ethnicities")
-}
-
-model Caste {
-  id          String    @id @default(cuid())
-  name        String
-  ethnicityId String
-  ethnicity   Ethnicity @relation(fields: [ethnicityId], references: [id], onDelete: Cascade)
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileCaste")
-  createdAt   DateTime  @default(now())
-
-  @@unique([name, ethnicityId])
-  @@index([ethnicityId])
-  @@map("castes")
-}
-
-model Country {
-  id             String          @id @default(cuid())
-  name           String          @unique
-  code           String          @unique // ISO 3166-1 alpha-2
-  dialCode       String?
-  isActive       Boolean         @default(true)
-  sortOrder      Int             @default(0)
-  statesProvinces StateProvince[]
-  profilesLiving Profile[]       @relation("ProfileLivingCountry")
-  profilesBorn   Profile[]       @relation("ProfileBornCountry")
-  createdAt      DateTime        @default(now())
-
-  @@map("countries")
-}
-
-model StateProvince {
-  id          String    @id @default(cuid())
-  name        String
-  code        String?
-  countryId   String
-  country     Country   @relation(fields: [countryId], references: [id], onDelete: Cascade)
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  cities      City[]
-  profilesLiving Profile[] @relation("ProfileLivingState")
-  profilesBorn   Profile[] @relation("ProfileBornState")
-  createdAt   DateTime  @default(now())
-
-  @@unique([name, countryId])
-  @@index([countryId])
-  @@map("states_provinces")
-}
-
-model City {
-  id              String        @id @default(cuid())
-  name            String
-  stateProvinceId String
-  stateProvince   StateProvince @relation(fields: [stateProvinceId], references: [id], onDelete: Cascade)
-  isActive        Boolean       @default(true)
-  sortOrder       Int           @default(0)
-  profilesLiving  Profile[]     @relation("ProfileLivingCity")
-  profilesBorn    Profile[]     @relation("ProfileBornCity")
-  createdAt       DateTime      @default(now())
-
-  @@unique([name, stateProvinceId])
-  @@index([stateProvinceId])
-  @@map("cities")
-}
-
-// Religious Hierarchy: Sect -> Maslak
-model Sect {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  description String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  maslaks     Maslak[]
-  profiles    Profile[] @relation("ProfileSect")
-  createdAt   DateTime  @default(now())
-
-  @@map("sects")
-}
-
-model Maslak {
-  id          String    @id @default(cuid())
-  name        String
-  sectId      String
-  sect        Sect      @relation(fields: [sectId], references: [id], onDelete: Cascade)
-  description String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileMaslak")
-  createdAt   DateTime  @default(now())
-
-  @@unique([name, sectId])
-  @@index([sectId])
-  @@map("maslaks")
-}
-
-// Education
-model EducationLevel {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  shortName   String?
-  description String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileEducationLevel")
-  createdAt   DateTime  @default(now())
-
-  @@map("education_levels")
-}
-
-model EducationField {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  category    String?
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileEducationField")
-  createdAt   DateTime  @default(now())
-
-  @@map("education_fields")
-}
-
-// Physical Attributes
-model Height {
-  id          String    @id @default(cuid())
-  feet        Int
-  inches      Int
-  cm          Int
-  display     String    // e.g., "5'6\" (168 cm)"
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileHeight")
-  createdAt   DateTime  @default(now())
-
-  @@unique([feet, inches])
-  @@map("heights")
-}
-
-// Languages
-model Language {
-  id          String            @id @default(cuid())
-  name        String            @unique
-  nativeName  String?
-  code        String?           @unique
-  isActive    Boolean           @default(true)
-  sortOrder   Int               @default(0)
-  profiles    ProfileLanguage[]
-  createdAt   DateTime          @default(now())
-
-  @@map("languages")
-}
-
-model ProfileLanguage {
-  id          String   @id @default(cuid())
-  profileId   String
-  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  languageId  String
-  language    Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
-  proficiency LanguageProficiency @default(NATIVE)
-  createdAt   DateTime @default(now())
-
-  @@unique([profileId, languageId])
-  @@index([profileId])
-  @@index([languageId])
-  @@map("profile_languages")
-}
-
-// Income
-model IncomeRange {
-  id          String    @id @default(cuid())
-  minAmount   Int
-  maxAmount   Int?
-  currency    String    @default("PKR")
-  display     String    // e.g., "Rs. 50,000 - 100,000"
-  displayUSD  String?   // e.g., "$500 - $1,000"
-  isActive    Boolean   @default(true)
-  sortOrder   Int       @default(0)
-  profiles    Profile[] @relation("ProfileIncome")
-  createdAt   DateTime  @default(now())
-
-  @@map("income_ranges")
-}
-
-// Field Suggestions (for user-submitted values pending admin approval)
-model FieldSuggestion {
-  id          String    @id @default(cuid())
-  fieldType   String    // e.g., "caste", "city", "profession"
-  value       String
-  parentId    String?   // Reference to parent (e.g., ethnicity for caste)
-  parentType  String?
-  submittedBy String
-  status      SuggestionStatus @default(PENDING)
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  notes       String?
-  createdAt   DateTime  @default(now())
-
-  @@index([fieldType, status])
-  @@map("field_suggestions")
-}
-
-// ==================== PROFILES (MATRIMONIAL) ====================
-model Profile {
-  id            String    @id @default(cuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Profile Ownership
-  profileFor    ProfileFor
-
-  // Basic Info (Required)
-  firstName     String
-  lastName      String?
-  gender        Gender
-  dateOfBirth   DateTime
-
-  // Bio & Description
-  bio           String?   @db.Text
-  aboutFamily   String?   @db.Text
-  partnerExpectations String? @db.Text
-
-  // Origin & Ethnicity
-  originId      String?
-  origin        Origin?   @relation("ProfileOrigin", fields: [originId], references: [id])
-  ethnicityId   String?
-  ethnicity     Ethnicity? @relation("ProfileEthnicity", fields: [ethnicityId], references: [id])
-  casteId       String?
-  caste         Caste?    @relation("ProfileCaste", fields: [casteId], references: [id])
-
-  // Location - Living
-  livingCountryId String?
-  livingCountry   Country? @relation("ProfileLivingCountry", fields: [livingCountryId], references: [id])
-  livingStateId   String?
-  livingState     StateProvince? @relation("ProfileLivingState", fields: [livingStateId], references: [id])
-  livingCityId    String?
-  livingCity      City?    @relation("ProfileLivingCity", fields: [livingCityId], references: [id])
-  livingAddress   String?
-
-  // Location - Born/Hometown
-  bornCountryId   String?
-  bornCountry     Country? @relation("ProfileBornCountry", fields: [bornCountryId], references: [id])
-  bornStateId     String?
-  bornState       StateProvince? @relation("ProfileBornState", fields: [bornStateId], references: [id])
-  bornCityId      String?
-  bornCity        City?    @relation("ProfileBornCity", fields: [bornCityId], references: [id])
-
-  // For overseas Pakistanis
-  visaStatus      VisaStatus?
-  residencyStatus String?
-
-  // Religion
-  religion          String    @default("Islam")
-  religiousBelonging ReligiousBelonging @default(SUNNI)
-  sectId            String?
-  sect              Sect?     @relation("ProfileSect", fields: [sectId], references: [id])
-  maslakId          String?
-  maslak            Maslak?   @relation("ProfileMaslak", fields: [maslakId], references: [id])
-  religiosity       Religiosity?
-  prayerFrequency   PrayerFrequency?
-  dietaryHabits     DietaryHabits?
-
-  // Education
-  educationLevelId  String?
-  educationLevel    EducationLevel? @relation("ProfileEducationLevel", fields: [educationLevelId], references: [id])
-  educationFieldId  String?
-  educationField    EducationField? @relation("ProfileEducationField", fields: [educationFieldId], references: [id])
-  institution       String?
-  educationDetails  String?
-
-  // Career & Profession
-  occupationType    OccupationType?
-  profession        String?
-  jobTitle          String?
-  employer          String?
-  employmentStatus  EmploymentStatus?
-  incomeRangeId     String?
-  incomeRange       IncomeRange? @relation("ProfileIncome", fields: [incomeRangeId], references: [id])
-
-  // Physical Attributes
-  heightId          String?
-  height            Height?   @relation("ProfileHeight", fields: [heightId], references: [id])
-  weight            Int?      // in kg
-  complexion        Complexion?
-  bodyType          BodyType?
-  disability        DisabilityStatus @default(NONE)
-  disabilityDetails String?
-
-  // Family
-  maritalStatus     MaritalStatus?
-  numberOfChildren  Int?      @default(0)
-  childrenLiving    ChildrenLiving?
-  fatherStatus      ParentStatus?
-  fatherOccupation  String?
-  motherStatus      ParentStatus?
-  motherOccupation  String?
-  siblings          Int?      @default(0)
-  siblingsMarried   Int?      @default(0)
-  familyType        FamilyType?
-  familyValues      FamilyValues?
-  socialStatus      SocialStatus?
-  familyWealth      FamilyWealth?
-  homeOwnership     HomeOwnership?
-
-  // Languages
-  motherTongue      String?
-  languages         ProfileLanguage[]
-
-  // Lifestyle
-  smoking           SmokingHabits?
-  hobbies           String?   @db.Text
-
-  // Privacy & Visibility
-  isActive      Boolean   @default(true)
-  isPublished   Boolean   @default(false)
-  visibility    ProfileVisibility @default(VISIBLE)
-  showContact   Boolean   @default(false)
-  showPhotos    Boolean   @default(true)
-
-  // Verification
-  isVerified        Boolean   @default(false)
-  verificationLevel Int       @default(0)
-  verifiedAt        DateTime?
-
-  // Stats
-  profileViews  Int       @default(0)
-  lastActiveAt  DateTime  @default(now())
-
-  // Profile Completion
-  completionPercentage Int @default(0)
-
-  // Relationships
-  photos        Photo[]
-  sentConnections     Connection[] @relation("SentConnections")
-  receivedConnections Connection[] @relation("ReceivedConnections")
-  visitors      ProfileVisitor[] @relation("VisitedProfile")
-  visits        ProfileVisitor[] @relation("VisitorProfile")
-
-  // Timestamps
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-=======
 // ============================================================================
 // SECTION 2: PROFILES (MATRIMONIAL)
 // ============================================================================
@@ -564,35 +167,10 @@ model Profile {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
->>>>>>> main
   @@index([userId])
   @@index([gender, isPublished, isActive])
   @@index([originId])
   @@index([ethnicityId])
-<<<<<<< HEAD
-  @@index([livingCountryId])
-  @@index([livingCityId])
-  @@index([sectId])
-  @@map("profiles")
-}
-
-// Profile Visitors (Analytics)
-model ProfileVisitor {
-  id          String   @id @default(cuid())
-  profileId   String
-  profile     Profile  @relation("VisitedProfile", fields: [profileId], references: [id], onDelete: Cascade)
-  visitorId   String
-  visitor     Profile  @relation("VisitorProfile", fields: [visitorId], references: [id], onDelete: Cascade)
-  visitedAt   DateTime @default(now())
-
-  @@unique([profileId, visitorId, visitedAt])
-  @@index([profileId])
-  @@index([visitorId])
-  @@map("profile_visitors")
-}
-
-// ==================== PHOTOS ====================
-=======
   @@index([countryLivingInId])
   @@index([educationLevelId])
   @@index([createdAt])
@@ -603,7 +181,6 @@ model ProfileVisitor {
 // SECTION 3: PHOTOS
 // ============================================================================
 
->>>>>>> main
 model Photo {
   id                  String            @id @default(cuid())
   profileId           String
@@ -664,27 +241,6 @@ model ProfileVisitor {
 // ============================================================================
 
 model Connection {
-<<<<<<< HEAD
-  id          String    @id @default(cuid())
-
-  senderId    String
-  sender      Profile   @relation("SentConnections", fields: [senderId], references: [id], onDelete: Cascade)
-
-  receiverId  String
-  receiver    Profile   @relation("ReceivedConnections", fields: [receiverId], references: [id], onDelete: Cascade)
-
-  status      ConnectionStatus @default(PENDING)
-  message     String?   @db.Text
-
-  // Track credit usage
-  creditsUsed Int       @default(1)
-
-  // Timestamps
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  respondedAt DateTime?
-
-=======
   id                  String            @id @default(cuid())
   
   senderId            String
@@ -703,7 +259,6 @@ model Connection {
   respondedAt         DateTime?
   expiresAt           DateTime?         // Connection request expiry
   
->>>>>>> main
   @@unique([senderId, receiverId])
   @@index([senderId])
   @@index([receiverId])
@@ -1104,22 +659,6 @@ model FundingWallet {
 }
 
 model Transaction {
-<<<<<<< HEAD
-  id            String    @id @default(cuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  type          TransactionType
-  walletType    WalletType
-  amount        Int
-  description   String
-
-  // For purchases
-  paymentMethod String?
-  paymentId     String?
-
-  createdAt     DateTime  @default(now())
-=======
   id                  String            @id @default(cuid())
   userId              String
   user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1138,7 +677,6 @@ model Transaction {
   referenceId         String?           // ID of related entity
   
   createdAt           DateTime          @default(now())
->>>>>>> main
 
   @@index([userId])
   @@index([type])
@@ -1196,10 +734,6 @@ enum MaritalStatus {
   NEVER_MARRIED
   DIVORCED
   WIDOWED
-<<<<<<< HEAD
-  SEPARATED
-  ANNULLED
-=======
   MARRIED  // Only for Groom (polygamy)
 }
 
@@ -1254,7 +788,6 @@ enum PhotoStatus {
   PENDING
   APPROVED
   REJECTED
->>>>>>> main
 }
 
 enum ProfileVisibility {
@@ -1300,154 +833,4 @@ enum TransactionType {
 enum WalletType {
   REDEEM
   FUNDING
-}
-
-enum SuggestionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum LanguageProficiency {
-  NATIVE
-  FLUENT
-  CONVERSATIONAL
-  BASIC
-}
-
-enum VisaStatus {
-  CITIZEN
-  PERMANENT_RESIDENT
-  WORK_VISA
-  STUDENT_VISA
-  VISIT_VISA
-  OTHER
-}
-
-enum ReligiousBelonging {
-  SUNNI
-  SHIA
-  OTHER
-}
-
-enum Religiosity {
-  VERY_RELIGIOUS
-  RELIGIOUS
-  MODERATE
-  NOT_RELIGIOUS
-}
-
-enum PrayerFrequency {
-  FIVE_TIMES
-  SOMETIMES
-  FRIDAY_ONLY
-  RARELY
-  NEVER
-}
-
-enum DietaryHabits {
-  HALAL_ONLY
-  HALAL_PREFERRED
-  NO_PREFERENCE
-  VEGETARIAN
-}
-
-enum OccupationType {
-  EMPLOYED
-  SELF_EMPLOYED
-  BUSINESS_OWNER
-  FREELANCER
-  STUDENT
-  HOMEMAKER
-  RETIRED
-  UNEMPLOYED
-  OTHER
-}
-
-enum EmploymentStatus {
-  FULL_TIME
-  PART_TIME
-  CONTRACT
-  SEASONAL
-  NOT_EMPLOYED
-}
-
-enum Complexion {
-  VERY_FAIR
-  FAIR
-  WHEATISH
-  OLIVE
-  BROWN
-  DARK
-}
-
-enum BodyType {
-  SLIM
-  AVERAGE
-  ATHLETIC
-  HEAVY
-  PLUS_SIZE
-}
-
-enum DisabilityStatus {
-  NONE
-  PHYSICAL
-  MENTAL
-  BOTH
-  PREFER_NOT_TO_SAY
-}
-
-enum ChildrenLiving {
-  LIVING_WITH_ME
-  NOT_LIVING_WITH_ME
-  SHARED_CUSTODY
-}
-
-enum ParentStatus {
-  ALIVE
-  DECEASED
-  SEPARATED
-}
-
-enum FamilyType {
-  NUCLEAR
-  JOINT
-  EXTENDED
-}
-
-enum FamilyValues {
-  TRADITIONAL
-  MODERATE
-  LIBERAL
-}
-
-enum SocialStatus {
-  UPPER_CLASS
-  UPPER_MIDDLE
-  MIDDLE_CLASS
-  LOWER_MIDDLE
-  WORKING_CLASS
-}
-
-enum FamilyWealth {
-  AFFLUENT
-  UPPER_MIDDLE
-  MIDDLE
-  MODEST
-}
-
-enum HomeOwnership {
-  OWN_HOUSE
-  OWN_APARTMENT
-  RENTED
-  FAMILY_HOME
-  OTHER
-}
-
-enum SmokingHabits {
-  NEVER
-  OCCASIONALLY
-  REGULARLY
-  TRYING_TO_QUIT
-  QUIT
 }
