@@ -40,8 +40,10 @@ export async function GET(req: Request) {
         data = await prisma.origin.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true },
+          select: { id: true, label: true },
         });
+        // Map label to name for frontend consistency
+        data = data.map((item) => ({ id: item.id, name: item.label }));
         break;
 
       case "ethnicity":
@@ -51,8 +53,9 @@ export async function GET(req: Request) {
             ...(parentId ? { originId: parentId } : {}),
           },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true, originId: true },
+          select: { id: true, label: true, originId: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label, originId: item.originId }));
         break;
 
       case "caste":
@@ -62,8 +65,9 @@ export async function GET(req: Request) {
             ...(parentId ? { ethnicityId: parentId } : {}),
           },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true, ethnicityId: true },
+          select: { id: true, label: true, ethnicityId: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label, ethnicityId: item.ethnicityId }));
         break;
 
       case "country":
@@ -100,8 +104,9 @@ export async function GET(req: Request) {
         data = await prisma.sect.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true },
+          select: { id: true, label: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label }));
         break;
 
       case "maslak":
@@ -111,48 +116,61 @@ export async function GET(req: Request) {
             ...(parentId ? { sectId: parentId } : {}),
           },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true, sectId: true },
+          select: { id: true, label: true, sectId: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label, sectId: item.sectId }));
         break;
 
       case "height":
         data = await prisma.height.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, cm: true, feet: true, inches: true, display: true },
+          select: { id: true, labelImperial: true, labelMetric: true, centimeters: true },
         });
+        // Create a display string combining imperial and metric
+        data = data.map((item) => ({
+          id: item.id,
+          display: `${item.labelImperial} (${item.labelMetric})`,
+        }));
         break;
 
       case "educationLevel":
         data = await prisma.educationLevel.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true },
+          select: { id: true, label: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label }));
         break;
 
       case "educationField":
         data = await prisma.educationField.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true },
+          select: { id: true, label: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label }));
         break;
 
       case "incomeRange":
         data = await prisma.incomeRange.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, minAmount: true, maxAmount: true, currency: true, display: true },
+          select: { id: true, label: true, currency: true },
         });
+        data = data.map((item) => ({
+          id: item.id,
+          display: item.label,
+        }));
         break;
 
       case "language":
         data = await prisma.language.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, name: true },
+          select: { id: true, label: true },
         });
+        data = data.map((item) => ({ id: item.id, name: item.label }));
         break;
 
       default:
