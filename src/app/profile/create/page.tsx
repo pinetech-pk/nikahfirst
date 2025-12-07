@@ -290,7 +290,7 @@ export default function CreateProfilePage() {
     setLoading(true);
     await saveStep();
     setLoading(false);
-    router.push("/dashboard");
+    router.push("/profile/photos");
   };
 
   // Validation for each step
