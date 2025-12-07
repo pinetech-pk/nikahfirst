@@ -228,8 +228,9 @@ export async function PATCH(req: Request) {
     if (updateData.incomeRangeId !== undefined) prismaUpdateData.incomeRangeId = updateData.incomeRangeId || null;
     if (updateData.motherTongueId !== undefined) prismaUpdateData.motherTongueId = updateData.motherTongueId || null;
 
-    // Step 7: Bio
+    // Step 7: Bio & Visibility
     if (updateData.bio !== undefined) prismaUpdateData.bio = updateData.bio || null;
+    if (updateData.originAudience !== undefined) prismaUpdateData.originAudience = updateData.originAudience || "SAME_ORIGIN";
 
     // Update the profile
     const updatedProfile = await prisma.profile.update({

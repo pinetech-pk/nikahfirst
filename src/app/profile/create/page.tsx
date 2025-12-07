@@ -153,6 +153,7 @@ export default function CreateProfilePage() {
             incomeRangeId: json.profile.incomeRangeId || "",
             motherTongueId: json.profile.motherTongueId || "",
             bio: json.profile.bio || "",
+            originAudience: json.profile.originAudience || "SAME_ORIGIN",
           }));
           // Determine which step to show based on completion
           if (json.profile.profileCompletion < 30) setStep(2);
@@ -299,7 +300,7 @@ export default function CreateProfilePage() {
   const isStep4Valid = formData.sectId && formData.religiousBelonging && formData.socialStatus;
   const isStep5Valid = formData.heightId && formData.complexion;
   const isStep6Valid = formData.educationLevelId && formData.educationFieldId && formData.occupationType && formData.incomeRangeId && formData.motherTongueId;
-  const isStep7Valid = formData.bio && formData.bio.length >= 50;
+  const isStep7Valid = formData.bio && formData.bio.length >= 50 && formData.originAudience;
 
   // Get validation errors for current step
   const getStepValidationErrors = useCallback((currentStep: number): string[] => {
@@ -340,6 +341,7 @@ export default function CreateProfilePage() {
       case 7:
         if (!formData.bio) errors.push("Bio");
         else if (formData.bio.length < 50) errors.push("Bio (minimum 50 characters)");
+        if (!formData.originAudience) errors.push("Profile Visibility");
         break;
     }
     return errors;
