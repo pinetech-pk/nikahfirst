@@ -84,15 +84,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       title: "My Profile",
       items: [
         {
-          name: "View Profile",
-          href: "/dashboard/profile",
+          name: "Manage Profile(s)",
+          href: "/dashboard/profiles",
           icon: User,
-          badge: null,
-        },
-        {
-          name: "Edit Profile",
-          href: "/dashboard/profile/edit",
-          icon: FileText,
           badge: null,
         },
         {
