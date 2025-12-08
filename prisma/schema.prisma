@@ -143,6 +143,7 @@ model Profile {
   isActive            Boolean           @default(true)
   isPublished         Boolean           @default(false)
   visibility          ProfileVisibility @default(VISIBLE)
+  originAudience      OriginAudience    @default(SAME_ORIGIN) // Who can view based on origin
   showIncome          Boolean           @default(false) // Show income to connections only
   
   // ==================== VERIFICATION ====================
@@ -794,6 +795,11 @@ enum ProfileVisibility {
   VISIBLE
   HIDDEN
   PRIVATE
+}
+
+enum OriginAudience {
+  SAME_ORIGIN      // Profile visible only to users with matching origin
+  ALL_ORIGINS      // Profile visible globally to all origins
 }
 
 enum ConnectionStatus {

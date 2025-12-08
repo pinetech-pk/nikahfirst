@@ -53,8 +53,9 @@ export interface FormData {
   occupationDetails: string;
   incomeRangeId: string;
   motherTongueId: string;
-  // Step 7: Bio
+  // Step 7: Bio & Visibility
   bio: string;
+  originAudience: string; // SAME_ORIGIN or ALL_ORIGINS
 }
 
 export const initialFormData: FormData = {
@@ -95,6 +96,7 @@ export const initialFormData: FormData = {
   incomeRangeId: "",
   motherTongueId: "",
   bio: "",
+  originAudience: "SAME_ORIGIN",
 };
 
 // Step titles for the progress indicator

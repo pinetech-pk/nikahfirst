@@ -21,6 +21,7 @@ import {
   StepPhysical,
   StepEducationCareer,
   StepBio,
+  MIN_BIO_LENGTH,
   FormData,
   LookupItem,
   initialFormData,
@@ -153,6 +154,7 @@ export default function CreateProfilePage() {
             incomeRangeId: json.profile.incomeRangeId || "",
             motherTongueId: json.profile.motherTongueId || "",
             bio: json.profile.bio || "",
+            originAudience: json.profile.originAudience || "SAME_ORIGIN",
           }));
           // Determine which step to show based on completion
           if (json.profile.profileCompletion < 30) setStep(2);
@@ -289,7 +291,7 @@ export default function CreateProfilePage() {
     setLoading(true);
     await saveStep();
     setLoading(false);
-    router.push("/dashboard");
+    router.push("/profile/photos");
   };
 
   // Validation for each step
@@ -299,7 +301,7 @@ export default function CreateProfilePage() {
   const isStep4Valid = formData.sectId && formData.religiousBelonging && formData.socialStatus;
   const isStep5Valid = formData.heightId && formData.complexion;
   const isStep6Valid = formData.educationLevelId && formData.educationFieldId && formData.occupationType && formData.incomeRangeId && formData.motherTongueId;
-  const isStep7Valid = formData.bio && formData.bio.length >= 50;
+  const isStep7Valid = formData.bio && formData.bio.length >= MIN_BIO_LENGTH && formData.originAudience;
 
   // Get validation errors for current step
   const getStepValidationErrors = useCallback((currentStep: number): string[] => {
@@ -339,7 +341,8 @@ export default function CreateProfilePage() {
         break;
       case 7:
         if (!formData.bio) errors.push("Bio");
-        else if (formData.bio.length < 50) errors.push("Bio (minimum 50 characters)");
+        else if (formData.bio.length < MIN_BIO_LENGTH) errors.push(`Bio (minimum ${MIN_BIO_LENGTH} characters)`);
+        if (!formData.originAudience) errors.push("Profile Visibility");
         break;
     }
     return errors;
@@ -525,31 +528,14 @@ export default function CreateProfilePage() {
           {renderStepContent()}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={prevStep}
-              disabled={step === 1 || saving}
-            >
-              Previous
-            </Button>
-
-            <div className="flex gap-2">
-              {profileId && step > 1 && (
-                <Button
-                  variant="ghost"
-                  onClick={() => saveStep()}
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Save Progress
-                </Button>
-              )}
-
+          <div className="mt-8 pt-4 border-t">
+            {/* Mobile Layout: Stacked buttons */}
+            <div className="flex flex-col gap-2 sm:hidden">
               {step < TOTAL_STEPS ? (
                 <Button
                   onClick={nextStep}
                   disabled={saving || !isCurrentStepValid()}
+                  className="w-full"
                 >
                   {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Save & Continue
@@ -558,11 +544,75 @@ export default function CreateProfilePage() {
                 <Button
                   onClick={handleComplete}
                   disabled={loading || !isStep7Valid}
+                  className="w-full"
                 >
                   {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Complete Profile
                 </Button>
               )}
+
+              {profileId && step > 1 && (
+                <Button
+                  variant="outline"
+                  onClick={() => saveStep()}
+                  disabled={saving}
+                  className="w-full"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Save Progress
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                onClick={prevStep}
+                disabled={step === 1 || saving}
+                className="w-full"
+              >
+                Previous
+              </Button>
+            </div>
+
+            {/* Desktop Layout: Side by side */}
+            <div className="hidden sm:flex sm:justify-between sm:items-center">
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                disabled={step === 1 || saving}
+              >
+                Previous
+              </Button>
+
+              <div className="flex gap-2">
+                {profileId && step > 1 && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => saveStep()}
+                    disabled={saving}
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Save Progress
+                  </Button>
+                )}
+
+                {step < TOTAL_STEPS ? (
+                  <Button
+                    onClick={nextStep}
+                    disabled={saving || !isCurrentStepValid()}
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Save & Continue
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleComplete}
+                    disabled={loading || !isStep7Valid}
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Complete Profile
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
