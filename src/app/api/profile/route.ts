@@ -84,16 +84,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ profile });
     }
 
-    // Otherwise, fetch user's most recent incomplete profile
-    const incompleteProfile = await prisma.profile.findFirst({
+    // Check if we should include completed profiles
+    const includeCompleted = searchParams.get("includeCompleted") === "true";
+
+    // Fetch user's most recent profile (optionally including completed ones)
+    const profile = await prisma.profile.findFirst({
       where: {
         userId: session.user.id,
-        profileCompletion: { lt: 100 },
+        ...(includeCompleted ? {} : { profileCompletion: { lt: 100 } }),
       },
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json({ profile: incompleteProfile });
+    return NextResponse.json({ profile });
   } catch (error) {
     console.error("Profile fetch error:", error);
     return NextResponse.json(

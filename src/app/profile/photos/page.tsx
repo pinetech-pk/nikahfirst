@@ -18,10 +18,10 @@ export default function ProfilePhotosPage() {
   const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check if user has a profile
+    // Check if user has a profile (include completed profiles)
     const checkProfile = async () => {
       try {
-        const res = await fetch("/api/profile");
+        const res = await fetch("/api/profile?includeCompleted=true");
         const json = await res.json();
         if (!json.profile) {
           // No profile, redirect to create one
