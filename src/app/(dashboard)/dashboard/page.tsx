@@ -26,6 +26,8 @@ import {
   Eye,
   Image,
   Plus,
+  MapPin,
+  Edit,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -55,17 +57,21 @@ export default async function DashboardPage() {
           sentConnections: true,
         },
       },
+      city: { select: { name: true } },
+      stateProvince: { select: { name: true } },
+      countryLivingIn: { select: { name: true } },
     },
   });
 
   // Calculate profile stats
-  const activeProfiles = profiles.filter((p) => p.isActive && p.isPublished).length;
-  const verifiedProfiles = profiles.filter((p) => p.isVerified).length;
-  const pendingProfiles = profiles.filter((p) => !p.isPublished).length;
-  const totalProfileViews = profiles.reduce((sum, p) => sum + p.profileViews, 0);
+  type ProfileType = typeof profiles[number];
+  const activeProfiles = profiles.filter((p: ProfileType) => p.isActive && p.isPublished).length;
+  const verifiedProfiles = profiles.filter((p: ProfileType) => p.isVerified).length;
+  const pendingProfiles = profiles.filter((p: ProfileType) => !p.isPublished).length;
+  const totalProfileViews = profiles.reduce((sum: number, p: ProfileType) => sum + p.profileViews, 0);
 
   // Get connection stats (received interests pending)
-  const profileIds = profiles.map((p) => p.id);
+  const profileIds = profiles.map((p: ProfileType) => p.id);
   const pendingConnections = profileIds.length > 0
     ? await prisma.connection.count({
         where: {
@@ -291,7 +297,7 @@ export default async function DashboardPage() {
           <Card>
             <CardContent className="p-0">
               <div className="divide-y divide-gray-100">
-                {profiles.map((profile) => {
+                {profiles.map((profile: ProfileType) => {
                   // Calculate age from dateOfBirth
                   const birthDate = new Date(profile.dateOfBirth);
                   const today = new Date();
@@ -301,13 +307,19 @@ export default async function DashboardPage() {
                     age--;
                   }
 
+                  // Build location string
+                  const locationParts = [];
+                  if (profile.city?.name) locationParts.push(profile.city.name);
+                  if (profile.countryLivingIn?.name) locationParts.push(profile.countryLivingIn.name);
+                  const locationString = locationParts.join(", ") || "Location not set";
+
                   return (
                     <div
                       key={profile.id}
-                      className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-gray-50 transition-colors gap-3"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
                           <User className="h-6 w-6 text-gray-500" />
                         </div>
                         <div>
@@ -317,9 +329,13 @@ export default async function DashboardPage() {
                           <p className="text-sm text-gray-500">
                             {profile.gender === "MALE" ? "Male" : "Female"} • {age} years old
                           </p>
+                          <p className="text-sm text-gray-400 flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {locationString}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
                         {profile.isVerified && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                             <BadgeCheck className="h-3 w-3 mr-1" />
@@ -337,6 +353,12 @@ export default async function DashboardPage() {
                             Pending Approval
                           </span>
                         )}
+                        <Link href={`/dashboard/profile/${profile.id}/edit`}>
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        </Link>
                         <Link href={`/dashboard/profile/${profile.id}`}>
                           <Button variant="outline" size="sm">
                             View Profile
