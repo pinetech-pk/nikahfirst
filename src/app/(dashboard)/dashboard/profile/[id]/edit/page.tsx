@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Edit, Wrench } from "lucide-react";
+import { ArrowLeft, Edit, Camera, User, Wrench, ChevronRight, Eye } from "lucide-react";
 
 interface EditProfilePageProps {
   params: Promise<{ id: string }>;
@@ -25,7 +25,7 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
     redirect("/login");
   }
 
-  // Fetch the profile to verify ownership
+  // Fetch the profile to verify ownership and get photo count
   const profile = await prisma.profile.findFirst({
     where: {
       id,
@@ -35,6 +35,11 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
       id: true,
       profileFor: true,
       gender: true,
+      _count: {
+        select: {
+          photos: true,
+        },
+      },
     },
   });
 
@@ -61,71 +66,99 @@ export default async function EditProfilePage({ params }: EditProfilePageProps) 
       </div>
 
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
-        <p className="text-gray-500 mt-1">
-          Make changes to &quot;{profileTitle}&quot;
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Edit Profile</h1>
+          <p className="text-gray-500 mt-1">
+            Manage &quot;{profileTitle}&quot;
+          </p>
+        </div>
+        <Link href={`/dashboard/profile/${id}`}>
+          <Button variant="outline" size="sm">
+            <Eye className="w-4 h-4 mr-2" />
+            View Profile
+          </Button>
+        </Link>
       </div>
 
-      {/* Placeholder Card */}
-      <Card>
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
-            <Wrench className="w-8 h-8 text-amber-600" />
-          </div>
-          <CardTitle>Edit Feature Coming Soon</CardTitle>
-          <CardDescription>
-            We&apos;re working on the profile editing functionality
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-          <div className="max-w-md mx-auto">
-            <p className="text-sm text-gray-500 mb-6">
-              Soon you&apos;ll be able to edit all your profile information including:
-            </p>
-            <ul className="text-sm text-gray-600 space-y-2 mb-6 text-left max-w-xs mx-auto">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Basic Information (Age, Marital Status)
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Origin & Background
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Location Details
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Religion & Family
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Physical Attributes
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Education & Career
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                Bio & Visibility Settings
-              </li>
+      {/* Edit Options */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Photos Section - Active */}
+        <Link href={`/dashboard/profile/${id}/photos`} className="block">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer border-2 hover:border-primary">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-blue-600" />
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400" />
+              </div>
+              <CardTitle className="mt-4">Manage Photos</CardTitle>
+              <CardDescription>
+                Upload, replace, or delete your profile photos
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {profile._count.photos} / 6 photos
+                </span>
+                <span className="text-green-600 font-medium">Available</span>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        {/* Profile Information - Coming Soon */}
+        <Card className="h-full opacity-75">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                <User className="w-6 h-6 text-amber-600" />
+              </div>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                Coming Soon
+              </span>
+            </div>
+            <CardTitle className="mt-4">Profile Information</CardTitle>
+            <CardDescription>
+              Update your personal details, education, career, and preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="text-sm text-gray-500 space-y-1">
+              <li>• Basic Information</li>
+              <li>• Origin & Background</li>
+              <li>• Location Details</li>
+              <li>• Religion & Family</li>
+              <li>• Physical Attributes</li>
+              <li>• Education & Career</li>
+              <li>• Bio & Visibility</li>
             </ul>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href={`/dashboard/profile/${id}`}>
-                <Button variant="outline">
-                  <Edit className="w-4 h-4 mr-2" />
-                  View Profile Instead
-                </Button>
-              </Link>
-              <Link href="/dashboard/profiles">
-                <Button>Back to Profile List</Button>
-              </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delete Profile Section - Coming Later */}
+      <Card className="border-red-200 bg-red-50/50">
+        <CardHeader>
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <Wrench className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <CardTitle className="text-red-800">Delete Profile</CardTitle>
+              <CardDescription className="text-red-600">
+                Permanently delete this profile and all associated data including photos, views, and connections.
+                This feature will be available soon.
+              </CardDescription>
             </div>
           </div>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" disabled>
+            Delete Profile (Coming Soon)
+          </Button>
         </CardContent>
       </Card>
     </div>
