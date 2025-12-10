@@ -30,7 +30,7 @@ export async function GET(
         stateProvince: { select: { name: true } },
         countryLivingIn: { select: { name: true } },
         countryOfOrigin: { select: { name: true } },
-        ethnicity: { select: { name: true } },
+        ethnicity: { select: { label: true } },
       },
     });
 
