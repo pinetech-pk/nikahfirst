@@ -13,7 +13,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
-    const allowedRoles = ["MODERATOR", "ADMIN", "SUPER_ADMIN"];
+    const allowedRoles = ["CONTENT_EDITOR", "SUPERVISOR", "SUPER_ADMIN"];
     if (!session || !allowedRoles.includes(session.user.role as string)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -23,13 +23,17 @@ export async function POST(req: Request, { params }: RouteParams) {
     const { action, feedback } = await req.json();
 
     if (action === "approve") {
-      // Approve profile
+      // Approve profile using new moderationStatus
       await prisma.profile.update({
         where: { id },
         data: {
+          moderationStatus: "APPROVED",
+          moderatedAt: new Date(),
+          moderatedBy: session.user.id,
+          rejectionReason: null,
+          // Keep isPublished for backward compatibility
           isPublished: true,
           isVerified: true,
-          verificationLevel: 1,
         },
       });
 
@@ -40,10 +44,15 @@ export async function POST(req: Request, { params }: RouteParams) {
         message: "Profile approved successfully",
       });
     } else if (action === "reject") {
-      // Keep profile unpublished and send feedback
+      // Reject profile with feedback
       await prisma.profile.update({
         where: { id },
         data: {
+          moderationStatus: "REJECTED",
+          moderatedAt: new Date(),
+          moderatedBy: session.user.id,
+          rejectionReason: feedback || null,
+          // Keep isPublished for backward compatibility
           isPublished: false,
         },
       });
@@ -53,6 +62,26 @@ export async function POST(req: Request, { params }: RouteParams) {
       return NextResponse.json({
         success: true,
         message: "Profile rejected with feedback",
+      });
+    } else if (action === "ban") {
+      // Ban profile (admin action)
+      await prisma.profile.update({
+        where: { id },
+        data: {
+          moderationStatus: "BANNED",
+          bannedAt: new Date(),
+          bannedBy: session.user.id,
+          banReason: feedback || null,
+          isPublished: false,
+          isActive: false,
+        },
+      });
+
+      // TODO: Send ban notification to user
+
+      return NextResponse.json({
+        success: true,
+        message: "Profile banned successfully",
       });
     }
 
