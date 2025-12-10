@@ -140,15 +140,29 @@ model Profile {
   bio                 String?           @db.Text // About me
   
   // ==================== PRIVACY & VISIBILITY ====================
-  isActive            Boolean           @default(true)
-  isPublished         Boolean           @default(false)
-  visibility          ProfileVisibility @default(VISIBLE)
+  isActive            Boolean           @default(true)  // User-controlled on/off
   originAudience      OriginAudience    @default(SAME_ORIGIN) // Who can view based on origin
   showIncome          Boolean           @default(false) // Show income to connections only
-  
+
+  // DEPRECATED - kept for backward compatibility
+  isPublished         Boolean           @default(false)  // @deprecated Use moderationStatus
+  visibility          ProfileVisibility @default(VISIBLE) // @deprecated
+
+  // ==================== MODERATION ====================
+  moderationStatus    ModerationStatus  @default(PENDING)
+  moderatedAt         DateTime?
+  moderatedBy         String?           // Admin/moderator user ID
+  rejectionReason     String?           @db.Text
+
+  // ==================== BAN TRACKING ====================
+  bannedAt            DateTime?
+  bannedBy            String?           // Admin user ID
+  banReason           String?           @db.Text
+
   // ==================== VERIFICATION ====================
-  isVerified          Boolean           @default(false)
-  verificationLevel   Int               @default(0) // 0-5 levels
+  // Note: Detailed verification is in ProfileVerification table
+  isVerified          Boolean           @default(false)  // Quick check flag
+  verification        ProfileVerification?
   
   // ==================== ANALYTICS ====================
   profileViews        Int               @default(0)
@@ -179,6 +193,61 @@ model Profile {
 }
 
 // ============================================================================
+// SECTION 2B: PROFILE VERIFICATION
+// ============================================================================
+
+model ProfileVerification {
+  id                  String            @id @default(cuid())
+  profileId           String            @unique
+  profile             Profile           @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  // Overall Status (manually set by admin)
+  isVerified          Boolean           @default(false)
+  verificationLevel   Int               @default(0)  // 0 = not verified, 1-9 levels
+
+  // Individual Verification Fields
+  ageVerified                 Boolean   @default(false)
+  ageVerifiedAt               DateTime?
+  ageVerifiedBy               String?
+  ageVerificationNote         String?   @db.Text
+
+  educationVerified           Boolean   @default(false)
+  educationVerifiedAt         DateTime?
+  educationVerifiedBy         String?
+  educationVerificationNote   String?   @db.Text
+
+  residencyVerified           Boolean   @default(false)
+  residencyVerifiedAt         DateTime?
+  residencyVerifiedBy         String?
+  residencyVerificationNote   String?   @db.Text
+
+  propertyVerified            Boolean   @default(false)
+  propertyVerifiedAt          DateTime?
+  propertyVerifiedBy          String?
+  propertyVerificationNote    String?   @db.Text
+
+  employmentVerified          Boolean   @default(false)
+  employmentVerifiedAt        DateTime?
+  employmentVerifiedBy        String?
+  employmentVerificationNote  String?   @db.Text
+
+  identityVerified            Boolean   @default(false)  // Government ID
+  identityVerifiedAt          DateTime?
+  identityVerifiedBy          String?
+  identityVerificationNote    String?   @db.Text
+
+  // Audit Trail
+  overallNotes        String?           @db.Text  // General verification notes
+  lastVerifiedAt      DateTime?
+  lastVerifiedBy      String?
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("profile_verifications")
+}
+
+// ============================================================================
 // SECTION 3: PHOTOS
 // ============================================================================
 
@@ -195,6 +264,7 @@ model Photo {
   
   // Metadata
   isPrimary           Boolean           @default(false)
+  isPrivate           Boolean           @default(false)  // true = visible only to connections
   sortOrder           Int               @default(0)
   status              PhotoStatus       @default(PENDING)
   
@@ -789,6 +859,13 @@ enum PhotoStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+enum ModerationStatus {
+  PENDING      // Newly created, awaiting review
+  APPROVED     // Moderator approved
+  REJECTED     // Moderator rejected (can resubmit after edit)
+  BANNED       // Admin banned (cannot resubmit without appeal)
 }
 
 enum ProfileVisibility {
