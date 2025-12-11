@@ -20,7 +20,7 @@ async function seedSubscriptionPlans() {
       yearlyDiscountPct: 0,
       sortOrder: 0,
       isActive: true,
-      isDefault: true, // Default for new registrations
+      isDefault: true,
       color: "gray",
       features: ["1 Active Profile", "3 Free Credits", "Basic Search", "Limited Messaging"],
     },
@@ -34,7 +34,7 @@ async function seedSubscriptionPlans() {
       redeemCycleDays: 20,
       profileLimit: 1,
       priceMonthly: 5,
-      priceYearly: 52.20, // 13% discount
+      priceYearly: 52.20,
       yearlyDiscountPct: 13,
       sortOrder: 1,
       isActive: true,
@@ -52,7 +52,7 @@ async function seedSubscriptionPlans() {
       redeemCycleDays: 30,
       profileLimit: 3,
       priceMonthly: 9,
-      priceYearly: 93.96, // 13% discount
+      priceYearly: 93.96,
       yearlyDiscountPct: 13,
       sortOrder: 2,
       isActive: true,
@@ -70,7 +70,7 @@ async function seedSubscriptionPlans() {
       redeemCycleDays: 30,
       profileLimit: 5,
       priceMonthly: 15,
-      priceYearly: 160.20, // 11% discount
+      priceYearly: 160.20,
       yearlyDiscountPct: 11,
       sortOrder: 3,
       isActive: true,
@@ -88,7 +88,7 @@ async function seedSubscriptionPlans() {
       redeemCycleDays: 30,
       profileLimit: 10,
       priceMonthly: 25,
-      priceYearly: 267.00, // 11% discount
+      priceYearly: 267.00,
       yearlyDiscountPct: 11,
       sortOrder: 4,
       isActive: true,
@@ -106,7 +106,7 @@ async function seedSubscriptionPlans() {
       redeemCycleDays: 30,
       profileLimit: 50,
       priceMonthly: 99,
-      priceYearly: 1057.32, // 11% discount
+      priceYearly: 1057.32,
       yearlyDiscountPct: 11,
       sortOrder: 5,
       isActive: true,
@@ -161,9 +161,195 @@ async function seedSubscriptionPlans() {
   console.log("✅ Subscription plans seeded successfully!");
 }
 
+async function seedCreditActions() {
+  console.log("🌱 Seeding credit actions...");
+
+  const actions = [
+    {
+      slug: "REQUEST_CONNECTION",
+      name: "Request Connection",
+      description: "Send a connection request to another user",
+      category: "connection",
+      creditCost: 1,
+      durationDays: null,
+      sortOrder: 0,
+    },
+    {
+      slug: "ACCESS_PHOTOS",
+      name: "Access Profile Photos",
+      description: "View all photos of a profile (if not private)",
+      category: "access",
+      creditCost: 2,
+      durationDays: null,
+      sortOrder: 1,
+    },
+    {
+      slug: "ACCESS_INCOME",
+      name: "Access Income Details",
+      description: "View income information of a profile (if not private)",
+      category: "access",
+      creditCost: 2,
+      durationDays: null,
+      sortOrder: 2,
+    },
+    {
+      slug: "ACCESS_CONTACT",
+      name: "Access Contact Information",
+      description: "View contact details of a profile (if not private)",
+      category: "access",
+      creditCost: 10,
+      durationDays: null,
+      sortOrder: 3,
+    },
+    {
+      slug: "DIRECT_MESSAGE",
+      name: "Direct Message",
+      description: "Send a direct message to a user without connection",
+      category: "connection",
+      creditCost: 10,
+      durationDays: null,
+      sortOrder: 4,
+    },
+    {
+      slug: "BOOST_WEEK",
+      name: "Boost Visibility (1 Week)",
+      description: "Increase profile visibility for 7 days",
+      category: "boost",
+      creditCost: 7,
+      durationDays: 7,
+      sortOrder: 5,
+    },
+    {
+      slug: "BOOST_FORTNIGHT",
+      name: "Boost Visibility (15 Days)",
+      description: "Increase profile visibility for 15 days",
+      category: "boost",
+      creditCost: 15,
+      durationDays: 15,
+      sortOrder: 6,
+    },
+  ];
+
+  for (const action of actions) {
+    await prisma.creditAction.upsert({
+      where: { slug: action.slug },
+      update: {
+        name: action.name,
+        description: action.description,
+        category: action.category,
+        creditCost: action.creditCost,
+        durationDays: action.durationDays,
+        sortOrder: action.sortOrder,
+        isActive: true,
+      },
+      create: {
+        slug: action.slug,
+        name: action.name,
+        description: action.description,
+        category: action.category,
+        creditCost: action.creditCost,
+        durationDays: action.durationDays,
+        sortOrder: action.sortOrder,
+        isActive: true,
+      },
+    });
+    console.log(`  ✓ ${action.name} (${action.creditCost} credits)`);
+  }
+
+  console.log("✅ Credit actions seeded successfully!");
+}
+
+async function seedCreditPackages() {
+  console.log("🌱 Seeding credit packages...");
+
+  const packages = [
+    {
+      slug: "PACK_5",
+      name: "Starter Pack",
+      credits: 5,
+      price: 15,
+      bonusCredits: 0,
+      savingsPercent: null,
+      isPopular: false,
+      sortOrder: 0,
+    },
+    {
+      slug: "PACK_7",
+      name: "Basic Pack",
+      credits: 7,
+      price: 17,
+      bonusCredits: 0,
+      savingsPercent: 19, // $2.43/credit vs $3/credit
+      isPopular: false,
+      sortOrder: 1,
+    },
+    {
+      slug: "PACK_11",
+      name: "Value Pack",
+      credits: 11,
+      price: 20,
+      bonusCredits: 0,
+      savingsPercent: 39, // $1.82/credit vs $3/credit
+      isPopular: true, // Mark as popular
+      sortOrder: 2,
+    },
+    {
+      slug: "PACK_17",
+      name: "Premium Pack",
+      credits: 17,
+      price: 25,
+      bonusCredits: 0,
+      savingsPercent: 51, // $1.47/credit vs $3/credit
+      isPopular: false,
+      sortOrder: 3,
+    },
+    {
+      slug: "PACK_23",
+      name: "Ultimate Pack",
+      credits: 23,
+      price: 30,
+      bonusCredits: 0,
+      savingsPercent: 57, // $1.30/credit vs $3/credit
+      isPopular: false,
+      sortOrder: 4,
+    },
+  ];
+
+  for (const pkg of packages) {
+    await prisma.creditPackage.upsert({
+      where: { slug: pkg.slug },
+      update: {
+        name: pkg.name,
+        credits: pkg.credits,
+        price: pkg.price,
+        bonusCredits: pkg.bonusCredits,
+        savingsPercent: pkg.savingsPercent,
+        isPopular: pkg.isPopular,
+        sortOrder: pkg.sortOrder,
+        isActive: true,
+      },
+      create: {
+        slug: pkg.slug,
+        name: pkg.name,
+        credits: pkg.credits,
+        price: pkg.price,
+        bonusCredits: pkg.bonusCredits,
+        savingsPercent: pkg.savingsPercent,
+        isPopular: pkg.isPopular,
+        sortOrder: pkg.sortOrder,
+        isActive: true,
+      },
+    });
+    console.log(`  ✓ ${pkg.name} (${pkg.credits} credits for $${pkg.price})`);
+  }
+
+  console.log("✅ Credit packages seeded successfully!");
+}
+
 async function main() {
   await seedSubscriptionPlans();
-  // Add more seed functions here as needed
+  await seedCreditActions();
+  await seedCreditPackages();
 }
 
 main()

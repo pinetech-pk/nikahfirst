@@ -32,6 +32,10 @@ import {
   ChevronDown,
   BarChart3,
   LogOut,
+  Crown,
+  Coins,
+  Package,
+  Sliders,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -102,6 +106,19 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/settings/change-password": {
     section: "Settings",
     page: "Change Password",
+  },
+  "/admin/global-settings": { section: "Global Settings", page: "Overview" },
+  "/admin/global-settings/subscription-plans": {
+    section: "Global Settings",
+    page: "Subscription Plans",
+  },
+  "/admin/global-settings/credit-actions": {
+    section: "Global Settings",
+    page: "Credit Actions",
+  },
+  "/admin/global-settings/credit-packages": {
+    section: "Global Settings",
+    page: "Credit Packages",
   },
 };
 
@@ -295,6 +312,29 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Audit Logs",
           href: "/admin/settings/audit",
           icon: FileText,
+          badge: null,
+        },
+      ],
+    },
+    {
+      title: "Global Settings",
+      items: [
+        {
+          name: "Subscription Plans",
+          href: "/admin/global-settings/subscription-plans",
+          icon: Crown,
+          badge: null,
+        },
+        {
+          name: "Credit Actions",
+          href: "/admin/global-settings/credit-actions",
+          icon: Coins,
+          badge: null,
+        },
+        {
+          name: "Credit Packages",
+          href: "/admin/global-settings/credit-packages",
+          icon: Package,
           badge: null,
         },
       ],

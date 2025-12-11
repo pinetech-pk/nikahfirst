@@ -107,6 +107,63 @@ model SubscriptionPlan {
 }
 
 // ============================================================================
+// SECTION 1C: CREDIT ACTIONS (Global Settings - Credit Usage Costs)
+// ============================================================================
+
+model CreditAction {
+  id                  String            @id @default(cuid())
+
+  // Action Identity
+  slug                String            @unique  // REQUEST_CONNECTION, ACCESS_PHOTOS, etc.
+  name                String            // Display name
+  description         String?           @db.Text
+  category            String?           // "connection", "access", "boost", etc.
+
+  // Cost Configuration
+  creditCost          Int               @default(1)   // Credits required
+  durationDays        Int?              // For time-based actions (boost = 7 or 15 days)
+
+  // Status & Display
+  isActive            Boolean           @default(true)
+  sortOrder           Int               @default(0)
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("credit_actions")
+}
+
+// ============================================================================
+// SECTION 1D: CREDIT PACKAGES (Global Settings - TopUp Plans)
+// ============================================================================
+
+model CreditPackage {
+  id                  String            @id @default(cuid())
+
+  // Package Identity
+  slug                String            @unique  // PACK_5, PACK_7, etc.
+  name                String            // Display name
+
+  // Credits & Pricing (USD)
+  credits             Int               // Number of credits
+  price               Decimal           @db.Decimal(10, 2)  // Price in USD
+
+  // Bonus/Savings Display
+  bonusCredits        Int               @default(0)   // Extra credits included
+  savingsPercent      Int?              // Display "Save X%"
+
+  // Display & Status
+  isPopular           Boolean           @default(false)  // Highlight this package
+  isActive            Boolean           @default(true)
+  sortOrder           Int               @default(0)
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("credit_packages")
+}
+
+// ============================================================================
 // SECTION 2: PROFILES (MATRIMONIAL)
 // ============================================================================
 
