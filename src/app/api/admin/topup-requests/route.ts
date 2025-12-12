@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { TopUpStatus } from "@prisma/client";
 
 /**
  * GET /api/admin/topup-requests
@@ -22,7 +23,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    const whereClause = status ? { status: status as string } : {};
+    const whereClause = status ? { status: status as TopUpStatus } : {};
 
     const [requests, stats] = await Promise.all([
       prisma.topUpRequest.findMany({
