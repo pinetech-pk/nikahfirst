@@ -50,6 +50,8 @@ model User {
   transactions        Transaction[]
   fieldSuggestions    FieldSuggestion[] @relation("UserSuggestions")
   reviewedSuggestions FieldSuggestion[] @relation("ReviewedSuggestions")
+  topUpRequests       TopUpRequest[]    @relation("UserTopUpRequests")
+  processedTopUps     TopUpRequest[]    @relation("ProcessedTopUpRequests")
 
   // Timestamps
   createdAt           DateTime          @default(now())
@@ -160,7 +162,82 @@ model CreditPackage {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
+  // Relations
+  topUpRequests       TopUpRequest[]
+
   @@map("credit_packages")
+}
+
+// ============================================================================
+// SECTION 1E: TOP-UP REQUESTS (Manual Payment System)
+// ============================================================================
+
+model TopUpRequest {
+  id                  String            @id @default(cuid())
+  requestNumber       String            @unique  // TXN-2024-0001 format
+
+  // User relationship
+  userId              String
+  user                User              @relation("UserTopUpRequests", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Package selected
+  packageId           String
+  package             CreditPackage     @relation(fields: [packageId], references: [id])
+
+  // Request details
+  credits             Int               // Credits to be added
+  bonusCredits        Int               @default(0)
+  amount              Decimal           @db.Decimal(10, 2)  // Amount in USD
+
+  // Payment info
+  paymentMethod       PaymentMethod     @default(BANK_TRANSFER)
+
+  // Status
+  status              TopUpStatus       @default(PENDING)
+
+  // Processing
+  processedBy         String?
+  processor           User?             @relation("ProcessedTopUpRequests", fields: [processedBy], references: [id])
+  processedAt         DateTime?
+  adminNotes          String?           @db.Text
+  rejectionReason     String?
+
+  // Timestamps
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("top_up_requests")
+}
+
+// ============================================================================
+// SECTION 1F: PAYMENT SETTINGS (Admin Configurable)
+// ============================================================================
+
+model PaymentSetting {
+  id                  String            @id @default(cuid())
+  method              PaymentMethod     @unique
+  isActive            Boolean           @default(true)
+
+  // Display info
+  label               String            // "Bank Transfer", "JazzCash"
+  instructions        String            @db.Text  // Payment instructions shown to user
+
+  // Account details
+  accountTitle        String?
+  accountNumber       String?
+  bankName            String?
+  branchCode          String?
+  iban                String?
+  mobileNumber        String?           // For JazzCash/EasyPaisa
+
+  sortOrder           Int               @default(0)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("payment_settings")
 }
 
 // ============================================================================
@@ -1030,9 +1107,25 @@ enum TransactionType {
   REDEMPTION
   REFUND
   BONUS
+  TOP_UP
 }
 
 enum WalletType {
   REDEEM
   FUNDING
+}
+
+enum TopUpStatus {
+  PENDING           // Awaiting payment verification
+  COMPLETED         // Approved, credits added
+  REJECTED          // Rejected by admin
+  CANCELLED         // Cancelled by user
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  JAZZCASH
+  EASYPAISA
+  STRIPE            // Future
+  OTHER
 }

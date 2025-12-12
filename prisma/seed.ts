@@ -346,10 +346,76 @@ async function seedCreditPackages() {
   console.log("✅ Credit packages seeded successfully!");
 }
 
+async function seedPaymentSettings() {
+  console.log("🌱 Seeding payment settings...");
+
+  const settings = [
+    {
+      method: "BANK_TRANSFER" as const,
+      label: "Bank Transfer",
+      instructions: "Please transfer the exact amount to our bank account. Include your request number in the transfer reference/description.\n\nProcessing time: 1-2 business days after payment confirmation.",
+      bankName: "HBL (Habib Bank Limited)",
+      accountTitle: "NikahFirst Services",
+      accountNumber: "1234567890123",
+      iban: "PK00HABB0001234567890123",
+      sortOrder: 0,
+    },
+    {
+      method: "JAZZCASH" as const,
+      label: "JazzCash",
+      instructions: "Send payment to our JazzCash account. Include your request number in the reference.\n\nProcessing time: Same day after payment confirmation.",
+      accountTitle: "NikahFirst Services",
+      mobileNumber: "03001234567",
+      sortOrder: 1,
+    },
+    {
+      method: "EASYPAISA" as const,
+      label: "EasyPaisa",
+      instructions: "Send payment to our EasyPaisa account. Include your request number in the reference.\n\nProcessing time: Same day after payment confirmation.",
+      accountTitle: "NikahFirst Services",
+      mobileNumber: "03451234567",
+      sortOrder: 2,
+    },
+  ];
+
+  for (const setting of settings) {
+    await prisma.paymentSetting.upsert({
+      where: { method: setting.method },
+      update: {
+        label: setting.label,
+        instructions: setting.instructions,
+        bankName: setting.bankName || null,
+        accountTitle: setting.accountTitle || null,
+        accountNumber: setting.accountNumber || null,
+        iban: setting.iban || null,
+        mobileNumber: setting.mobileNumber || null,
+        sortOrder: setting.sortOrder,
+        isActive: true,
+      },
+      create: {
+        method: setting.method,
+        label: setting.label,
+        instructions: setting.instructions,
+        bankName: setting.bankName || null,
+        accountTitle: setting.accountTitle || null,
+        accountNumber: setting.accountNumber || null,
+        iban: setting.iban || null,
+        mobileNumber: setting.mobileNumber || null,
+        sortOrder: setting.sortOrder,
+        isActive: true,
+      },
+    });
+    console.log(`  ✓ ${setting.label}`);
+  }
+
+  console.log("✅ Payment settings seeded successfully!");
+}
+
 async function main() {
   await seedSubscriptionPlans();
   await seedCreditActions();
   await seedCreditPackages();
+  await seedPaymentSettings();
 }
 
 main()

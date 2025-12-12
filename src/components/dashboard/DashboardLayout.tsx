@@ -28,6 +28,8 @@ import {
   Gift,
   HelpCircle,
   FileText,
+  Wallet,
+  History,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -157,6 +159,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           icon: Sparkles,
           badge: "Premium",
           badgeColor: "default",
+        },
+        {
+          name: "Top Up Credits",
+          href: "/dashboard/topup",
+          icon: Wallet,
+          badge: null,
+        },
+        {
+          name: "Transactions",
+          href: "/dashboard/transactions",
+          icon: History,
+          badge: null,
         },
         {
           name: "Billing",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -120,11 +120,40 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
     section: "Global Settings",
     page: "Credit Packages",
   },
+  "/admin/global-settings/payment-settings": {
+    section: "Global Settings",
+    page: "Payment Settings",
+  },
+  "/admin/financial/topup-requests": {
+    section: "Financial",
+    page: "Top-Up Requests",
+  },
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingTopUpCount, setPendingTopUpCount] = useState<number>(0);
   const pathname = usePathname();
+
+  // Fetch pending top-up requests count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch("/api/admin/topup-requests/pending-count");
+        if (response.ok) {
+          const data = await response.json();
+          setPendingTopUpCount(data.count || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch pending top-up count:", error);
+      }
+    };
+
+    fetchPendingCount();
+    // Refresh count every 30 seconds
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Handle logout
   const handleLogout = () => {
@@ -250,9 +279,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Financial",
       items: [
         {
+          name: "Top-Up Requests",
+          href: "/admin/financial/topup-requests",
+          icon: CreditCard,
+          badge: pendingTopUpCount > 0 ? pendingTopUpCount.toString() : null,
+          badgeColor: "destructive",
+        },
+        {
           name: "Subscriptions",
           href: "/admin/financial/subscriptions",
-          icon: CreditCard,
+          icon: Crown,
           badge: null,
         },
         {
@@ -335,6 +371,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Credit Packages",
           href: "/admin/global-settings/credit-packages",
           icon: Package,
+          badge: null,
+        },
+        {
+          name: "Payment Settings",
+          href: "/admin/global-settings/payment-settings",
+          icon: CreditCard,
           badge: null,
         },
       ],
