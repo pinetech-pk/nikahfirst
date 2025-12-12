@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "SUPER_ADMIN") {
+    if (!session || !session.user.role || session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -49,7 +49,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "SUPER_ADMIN") {
+    if (!session || !session.user.role || session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -99,7 +99,7 @@ export async function DELETE(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "SUPER_ADMIN") {
+    if (!session || !session.user.role || session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

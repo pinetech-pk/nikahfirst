@@ -20,6 +20,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (
       !session ||
+      !session.user.role ||
       !["SUPERVISOR", "SUPER_ADMIN"].includes(session.user.role)
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -79,6 +80,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     if (
       !session ||
+      !session.user.role ||
       !["SUPERVISOR", "SUPER_ADMIN"].includes(session.user.role)
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

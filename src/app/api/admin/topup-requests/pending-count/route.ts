@@ -13,6 +13,7 @@ export async function GET() {
 
     if (
       !session ||
+      !session.user.role ||
       !["SUPERVISOR", "SUPER_ADMIN"].includes(session.user.role)
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
