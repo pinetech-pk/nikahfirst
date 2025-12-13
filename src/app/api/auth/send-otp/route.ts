@@ -88,7 +88,7 @@ export async function POST(req: Request) {
 
     // Send email via Resend with simple HTML
     const { error: emailError } = await resend.emails.send({
-      from: "NikahFirst <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "NikahFirst <noreply@contact.nikahfirst.com>",
       to: normalizedEmail,
       subject: getEmailSubject(type),
       html: getOTPEmailHTML(otp, name, type, OTP_CONFIG.expiryMinutes),

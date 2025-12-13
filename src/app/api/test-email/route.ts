@@ -20,7 +20,7 @@ export async function GET(req: Request) {
     const resend = new Resend(process.env.RESEND_API_KEY);
 
     const { data, error } = await resend.emails.send({
-      from: "NikahFirst <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "NikahFirst <noreply@contact.nikahfirst.com>",
       to: testEmail,
       subject: "Test Email from NikahFirst",
       html: `

@@ -103,7 +103,7 @@ export async function POST(req: Request) {
     // Send welcome email (don't block registration if this fails)
     try {
       await resend.emails.send({
-        from: "NikahFirst <onboarding@resend.dev>",
+        from: process.env.EMAIL_FROM || "NikahFirst <noreply@contact.nikahfirst.com>",
         to: normalizedEmail,
         subject: "Welcome to NikahFirst!",
         html: getWelcomeEmailHTML(name),
