@@ -43,6 +43,8 @@ export async function GET() {
             balance: redeemWallet.balance,
             limit: redeemWallet.limit,
             nextRedemption: redeemWallet.nextRedemption,
+            redeemCredits: redeemWallet.redeemCredits,
+            redeemCycleDays: redeemWallet.redeemCycleDays,
           }
         : null,
     });

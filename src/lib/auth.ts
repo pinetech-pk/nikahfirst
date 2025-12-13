@@ -67,7 +67,16 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      return url.startsWith(baseUrl) ? url : baseUrl;
+      // Handle relative URLs (like /dashboard)
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Handle absolute URLs that start with the base URL
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      // Default to base URL for safety
+      return baseUrl;
     },
     async session({ token, session }) {
       // CRITICAL: Pass role from token to session
