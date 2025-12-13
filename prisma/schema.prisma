@@ -952,6 +952,32 @@ model Transaction {
 }
 
 // ============================================================================
+// SECTION 14B: EMAIL VERIFICATION (OTP)
+// ============================================================================
+
+model EmailVerification {
+  id          String   @id @default(cuid())
+  email       String
+  otp         String   // 6-digit OTP code
+  type        VerificationType @default(REGISTRATION)
+  expiresAt   DateTime
+  verified    Boolean  @default(false)
+  attempts    Int      @default(0) // Track failed attempts
+  createdAt   DateTime @default(now())
+
+  @@index([email])
+  @@index([email, otp])
+  @@index([expiresAt])
+  @@map("email_verifications")
+}
+
+enum VerificationType {
+  REGISTRATION     // New user registration
+  PASSWORD_RESET   // Password reset request
+  EMAIL_CHANGE     // Email change verification
+}
+
+// ============================================================================
 // SECTION 15: ENUMS
 // ============================================================================
 
