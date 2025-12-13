@@ -7,12 +7,10 @@ import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import {
-  CreditCard,
   Users,
   User,
   Link2,
@@ -28,6 +26,8 @@ import {
   Plus,
   MapPin,
   Edit,
+  Phone,
+  Gift,
 } from "lucide-react";
 
 export default async function DashboardPage() {
@@ -37,13 +37,21 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Get user data with subscription
+  // Get user data with subscription plan
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
       id: true,
       email: true,
-      subscription: true,
+      phone: true,
+      subscriptionPlan: {
+        select: {
+          name: true,
+          slug: true,
+        },
+      },
+      tierRedeemCredits: true,
+      tierRedeemCycleDays: true,
     },
   });
 
@@ -93,9 +101,16 @@ export default async function DashboardPage() {
       })
     : 0;
 
-  // Get wallet balances
+  // Get wallet balances with redemption info
   const redeemWallet = await prisma.redeemWallet.findUnique({
     where: { userId: session.user.id },
+    select: {
+      balance: true,
+      limit: true,
+      redeemCredits: true,
+      redeemCycleDays: true,
+      nextRedemption: true,
+    },
   });
 
   const fundingWallet = await prisma.fundingWallet.findUnique({
@@ -105,16 +120,58 @@ export default async function DashboardPage() {
   const totalCredits =
     (redeemWallet?.balance || 0) + (fundingWallet?.balance || 0);
 
-  // Format subscription tier for display
-  const subscriptionLabel = user?.subscription === "FREE" ? "Free Plan" : user?.subscription || "Free Plan";
+  // Format subscription tier for display - use subscriptionPlan if available
+  const subscriptionLabel = user?.subscriptionPlan?.name || "Free Plan";
+
+  // Calculate days until next redemption
+  const now = new Date();
+  const nextRedemption = redeemWallet?.nextRedemption;
+  let daysUntilRedemption = 0;
+  let canRedeemNow = false;
+
+  if (nextRedemption) {
+    const timeDiff = nextRedemption.getTime() - now.getTime();
+    if (timeDiff <= 0) {
+      canRedeemNow = true;
+    } else {
+      daysUntilRedemption = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+    }
+  }
 
   return (
     <div className="space-y-8">
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 mt-1">Welcome back! Here's your activity overview.</p>
+        <p className="text-gray-500 mt-1">Welcome back! Here&apos;s your activity overview.</p>
       </div>
+
+      {/* Phone Number Required Banner */}
+      {!user?.phone && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <Phone className="h-5 w-5 text-amber-600" />
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-800">Phone Number Required</h3>
+                <p className="text-sm text-amber-700 mt-1">
+                  Please add your phone number to complete your account setup. This is required for account verification and important notifications.
+                </p>
+                <Link href="/dashboard/settings">
+                  <Button variant="outline" size="sm" className="mt-3 border-amber-300 text-amber-700 hover:bg-amber-100">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Add Phone Number
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Top Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -134,6 +191,22 @@ export default async function DashboardPage() {
             <p className="text-xs text-gray-500 mt-1">
               Redeem: {redeemWallet?.balance || 0} | Funding: {fundingWallet?.balance || 0}
             </p>
+            {/* Next Free Credit Redemption */}
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <Gift className="h-4 w-4 text-green-500" />
+                <span className="text-xs font-medium text-gray-600">Free Credits</span>
+              </div>
+              {canRedeemNow ? (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  +{redeemWallet?.redeemCredits || user?.tierRedeemCredits || 1} credits available now!
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">
+                  +{redeemWallet?.redeemCredits || user?.tierRedeemCredits || 1} credits in {daysUntilRedemption} day{daysUntilRedemption !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
 

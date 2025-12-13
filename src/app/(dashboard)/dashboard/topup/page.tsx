@@ -42,6 +42,7 @@ import {
   Building,
   Smartphone,
   Copy,
+  Calendar,
 } from "lucide-react";
 
 interface CreditPackage {
@@ -90,6 +91,13 @@ interface WalletData {
   fundingBalance: number;
   redeemBalance: number;
   totalCredits: number;
+  redeemWallet?: {
+    balance: number;
+    limit: number;
+    nextRedemption: string;
+    redeemCredits: number;
+    redeemCycleDays: number;
+  } | null;
 }
 
 export default function TopUpPage() {
@@ -335,6 +343,33 @@ export default function TopUpPage() {
               {walletData?.redeemBalance || 0}
             </div>
             <p className="text-xs text-gray-500 mt-1">free credits</p>
+            {/* Next Free Credit Redemption */}
+            {walletData?.redeemWallet && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-2 text-xs">
+                  <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                  <span className="text-gray-600">Next free credits:</span>
+                  {(() => {
+                    const nextRedemption = new Date(walletData.redeemWallet.nextRedemption);
+                    const now = new Date();
+                    const timeDiff = nextRedemption.getTime() - now.getTime();
+                    if (timeDiff <= 0) {
+                      return (
+                        <span className="font-medium text-green-600">
+                          +{walletData.redeemWallet.redeemCredits} available now!
+                        </span>
+                      );
+                    }
+                    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                    return (
+                      <span className="font-medium text-gray-700">
+                        +{walletData.redeemWallet.redeemCredits} in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                      </span>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
