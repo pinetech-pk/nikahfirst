@@ -24,7 +24,8 @@ export async function POST(req: Request) {
     // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
 
-    // For registration, check if user already exists and is verified
+    // FIRST: Check if user already exists (before any other operations)
+    // This is the primary validation for registration
     if (type === "REGISTRATION") {
       const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
@@ -32,8 +33,8 @@ export async function POST(req: Request) {
 
       if (existingUser && existingUser.emailVerified) {
         return NextResponse.json(
-          { error: "An account with this email already exists" },
-          { status: 400 }
+          { error: "An account with this email already exists. Please login instead." },
+          { status: 409 } // 409 Conflict is more appropriate
         );
       }
     }
@@ -127,8 +128,10 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error in send-otp:", error);
+    // Return more specific error message
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to send verification code" },
+      { error: `Failed to process request: ${errorMessage}` },
       { status: 500 }
     );
   }
