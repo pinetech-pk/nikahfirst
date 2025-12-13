@@ -47,7 +47,7 @@ export default async function DashboardPage() {
       subscriptionPlan: {
         select: {
           name: true,
-          tier: true,
+          slug: true,
         },
       },
       tierRedeemCredits: true,
