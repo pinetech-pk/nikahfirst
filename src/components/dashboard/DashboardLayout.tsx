@@ -7,6 +7,7 @@ import { useSession, signOut } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/layout/header/Logo";
 import {
   LayoutDashboard,
   User,
@@ -260,14 +261,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-700">
-          <Link href="/dashboard" className="block">
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              🕌 NikahFirst
-            </h1>
-          </Link>
+        <div className="p-6 border-b border-gray-800">
+          <Logo variant="dark" size="normal" href="/dashboard" />
           <Badge className={cn(
-            "mt-3 font-medium",
+            "mt-2 font-medium",
             userPlan.isFree
               ? "bg-gray-700 text-gray-300 hover:bg-gray-700"
               : "bg-green-600 text-white hover:bg-green-600"
