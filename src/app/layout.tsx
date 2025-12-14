@@ -10,6 +10,11 @@ export const metadata: Metadata = {
   title: "NikahFirst - Trusted Muslim Matrimonial Platform",
   description:
     "Find your life partner in a trusted, family-oriented environment",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
