@@ -88,12 +88,6 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
         [onValidationChange]
       );
 
-      // Handle blur - validate on blur
-      const handleBlur = React.useCallback(() => {
-        setIsTouched(true);
-        validatePhone(value as string);
-      }, [value, validatePhone]);
-
       // Get validation message
       const getValidationMessage = () => {
         if (!showValidation || !isTouched || isValid === null || isValid) {
@@ -127,30 +121,18 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
             ref={ref}
             className={cn("flex", className)}
             flagComponent={FlagComponent}
-            countrySelectComponent={(countrySelectProps) => (
-              <CountrySelect
-                {...countrySelectProps}
-                preferredCountries={preferredCountries}
-              />
-            )}
-            inputComponent={(inputProps) => (
-              <InputComponent
-                {...inputProps}
-                hasError={hasError}
-                onBlur={(e) => {
-                  inputProps.onBlur?.(e);
-                  handleBlur();
-                }}
-              />
-            )}
+            countrySelectComponent={CountrySelect}
+            inputComponent={InputComponent}
             smartCaret={false}
+            international
+            countryCallingCodeEditable={false}
             value={value}
             onChange={(newValue) => {
               onChange?.(newValue || ("" as RPNInput.Value));
-              // Re-validate if already touched
-              if (isTouched) {
-                validatePhone(newValue as string);
-              }
+            }}
+            onBlur={() => {
+              setIsTouched(true);
+              validatePhone(value as string);
             }}
             {...props}
           />
@@ -166,23 +148,16 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
   );
 PhoneInput.displayName = "PhoneInput";
 
-interface InputComponentProps extends React.ComponentProps<"input"> {
-  hasError?: boolean;
-}
-
-const InputComponent = React.forwardRef<HTMLInputElement, InputComponentProps>(
-  ({ className, hasError, ...props }, ref) => (
-    <Input
-      className={cn(
-        "rounded-e-lg rounded-s-none",
-        hasError && "border-red-500 focus-visible:ring-red-500",
-        className
-      )}
-      {...props}
-      ref={ref}
-    />
-  )
-);
+const InputComponent = React.forwardRef<
+  HTMLInputElement,
+  React.ComponentProps<"input">
+>(({ className, ...props }, ref) => (
+  <Input
+    className={cn("rounded-e-lg rounded-s-none", className)}
+    {...props}
+    ref={ref}
+  />
+));
 InputComponent.displayName = "InputComponent";
 
 type CountryEntry = { label: string; value: RPNInput.Country | undefined };
@@ -192,7 +167,6 @@ type CountrySelectProps = {
   value: RPNInput.Country;
   onChange: (value: RPNInput.Country) => void;
   options: CountryEntry[];
-  preferredCountries?: RPNInput.Country[];
 };
 
 const CountrySelect = ({
@@ -200,7 +174,6 @@ const CountrySelect = ({
   value: selectedCountry,
   onChange,
   options,
-  preferredCountries = DEFAULT_PREFERRED_COUNTRIES,
 }: CountrySelectProps) => {
   const [open, setOpen] = React.useState(false);
 
@@ -210,12 +183,12 @@ const CountrySelect = ({
   );
 
   // Split into preferred and other countries
-  const preferredOptions = preferredCountries
+  const preferredOptions = DEFAULT_PREFERRED_COUNTRIES
     .map((code) => validOptions.find((opt) => opt.value === code))
     .filter((opt): opt is CountryEntry & { value: RPNInput.Country } => !!opt);
 
   const otherOptions = validOptions.filter(
-    (opt) => !preferredCountries.includes(opt.value)
+    (opt) => !DEFAULT_PREFERRED_COUNTRIES.includes(opt.value)
   );
 
   const renderCountryItem = (option: CountryEntry & { value: RPNInput.Country }) => (
