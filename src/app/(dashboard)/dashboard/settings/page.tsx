@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { PhoneInput } from "@/components/ui/phone-input";
+import type { E164Number } from "libphonenumber-js/core";
 import {
   User,
   Lock,
@@ -22,7 +24,6 @@ import {
   Eye,
   EyeOff,
   Mail,
-  Phone,
   Save,
   Loader2,
   CheckCircle,
@@ -46,7 +47,7 @@ export default function SettingsPage() {
   // Personal info form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState<E164Number | undefined>();
   const [isSavingInfo, setIsSavingInfo] = useState(false);
   const [infoMessage, setInfoMessage] = useState<{
     type: "success" | "error";
@@ -75,7 +76,7 @@ export default function SettingsPage() {
           setUserData(data);
           setName(data.name || "");
           setEmail(data.email || "");
-          setPhone(data.phone || "");
+          setPhone(data.phone as E164Number | undefined);
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
@@ -96,7 +97,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/auth/account", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, phone }),
+        body: JSON.stringify({ name, email, phone: phone || null }),
       });
 
       const data = await response.json();
@@ -276,19 +277,16 @@ export default function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    className="pl-10"
-                    placeholder="+92 300 1234567"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                  />
-                </div>
+                <PhoneInput
+                  id="phone"
+                  placeholder="300 1234567"
+                  defaultCountry="PK"
+                  value={phone}
+                  onChange={setPhone}
+                />
                 <p className="text-xs text-gray-500">
-                  Your phone number is used for account recovery and verification
+                  Your phone number is used for account recovery and verification.
+                  Stored in international format (e.g., +923001234567)
                 </p>
               </div>
               <Button

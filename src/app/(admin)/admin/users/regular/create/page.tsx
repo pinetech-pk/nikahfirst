@@ -25,7 +25,6 @@ import {
   AlertCircle,
   User,
   Mail,
-  Phone,
   Shield,
   Send,
   Info,
@@ -34,17 +33,19 @@ import {
   Crown,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PhoneInput } from "@/components/ui/phone-input";
+import type { E164Number } from "libphonenumber-js/core";
 
 export default function CreateRegularUserPage() {
   const router = useRouter();
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ACTIVE");
   const [selectedSubscription, setSelectedSubscription] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState<E164Number | undefined>();
 
   const form = useForm({
     name: "",
     email: "",
-    phone: "",
     sendWelcomeEmail: true,
     requirePasswordChange: true,
     generatePassword: true,
@@ -65,7 +66,7 @@ export default function CreateRegularUserPage() {
         body: JSON.stringify({
           name: form.formData.name,
           email: form.formData.email,
-          phone: form.formData.phone || null,
+          phone: phoneNumber || null,
           role: "USER",
           status: selectedStatus,
           subscription: selectedSubscription || "FREE",
@@ -218,19 +219,16 @@ export default function CreateRegularUserPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number (Optional)</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+92 300 1234567"
-                      className="pl-9"
-                      value={form.formData.phone}
-                      onChange={(e) =>
-                        form.updateField("phone", e.target.value)
-                      }
-                    />
-                  </div>
+                  <PhoneInput
+                    id="phone"
+                    placeholder="300 1234567"
+                    defaultCountry="PK"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
+                  <p className="text-xs text-gray-500">
+                    Format: +923001234567 (stored in E.164 format)
+                  </p>
                 </div>
               </div>
             </CardContent>
