@@ -60,7 +60,6 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
       {
         className,
         onChange,
-        preferredCountries = DEFAULT_PREFERRED_COUNTRIES,
         showValidation = true,
         errorMessage,
         onValidationChange,
@@ -113,7 +112,6 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
       };
 
       const validationMessage = getValidationMessage();
-      const hasError = isTouched && isValid === false;
 
       return (
         <div className="space-y-1">
