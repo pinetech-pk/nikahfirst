@@ -38,11 +38,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold text-white mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <FooterLink href="/about">About Us</FooterLink>
               <FooterLink href="/how-it-works">How It Works</FooterLink>
               <FooterLink href="/success-stories">Success Stories</FooterLink>
               <FooterLink href="/pricing">Pricing Plans</FooterLink>
-              <FooterLink href="/browse">Browse Profiles</FooterLink>
             </ul>
           </div>
 
@@ -51,7 +49,6 @@ export function Footer() {
             <h3 className="font-semibold text-white mb-4">Support</h3>
             <ul className="space-y-2">
               <FooterLink href="/help">Help Center</FooterLink>
-              <FooterLink href="/safety">Safety Tips</FooterLink>
               <FooterLink href="/privacy">Privacy Policy</FooterLink>
               <FooterLink href="/terms">Terms of Service</FooterLink>
               <FooterLink href="/contact">Contact Us</FooterLink>
