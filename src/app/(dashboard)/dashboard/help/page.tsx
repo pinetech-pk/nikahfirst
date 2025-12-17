@@ -568,13 +568,13 @@ export default function HelpPage() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <MessageSquare className="h-8 w-8 mx-auto text-green-600 mb-2" />
                   <h4 className="font-semibold">Email Support</h4>
-                  <p className="text-sm text-gray-600">support@nikahfirst.com</p>
+                  <p className="text-sm text-gray-600">contact@nikahfirst.com</p>
                   <p className="text-xs text-gray-500 mt-1">Response within 24-48 hours</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <Shield className="h-8 w-8 mx-auto text-green-600 mb-2" />
                   <h4 className="font-semibold">WhatsApp</h4>
-                  <p className="text-sm text-gray-600">+92 300 1234567</p>
+                  <p className="text-sm text-gray-600">+92 300 3736005</p>
                   <p className="text-xs text-gray-500 mt-1">Mon-Sat, 9 AM - 6 PM PKT</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
