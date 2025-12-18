@@ -123,35 +123,9 @@ export async function PATCH(
       );
     }
 
-    // Validate subscription if provided
-    const validSubscriptions: SubscriptionTier[] = [
-      "FREE",
-      "STANDARD",
-      "SILVER",
-      "GOLD",
-      "PLATINUM",
-      "PRO",
-    ];
-    if (body.subscription && !validSubscriptions.includes(body.subscription as SubscriptionTier)) {
-      return NextResponse.json(
-        { error: "Invalid subscription tier" },
-        { status: 400 }
-      );
-    }
-
     // Build update data object
-    const updateData: {
-      name: string;
-      email: string;
-      phone: string | null;
-      role: UserRole;
-      status: UserStatus;
-      subscription?: SubscriptionTier;
-      password?: string;
-      emailVerified?: boolean;
-      phoneVerified?: boolean;
-      isVerified?: boolean;
-    } = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
       name: body.name,
       email: body.email,
       phone: body.phone || null,
@@ -159,9 +133,34 @@ export async function PATCH(
       status: body.status as UserStatus,
     };
 
-    // Handle subscription update
-    if (body.subscription) {
-      updateData.subscription = body.subscription as SubscriptionTier;
+    // Handle subscription plan change - this is the key part
+    // Accept either subscriptionPlanId or subscription (slug) for backwards compatibility
+    const subscriptionSlug = body.subscriptionPlanId || body.subscription;
+
+    if (subscriptionSlug) {
+      // Fetch the subscription plan by slug
+      const plan = await prisma.subscriptionPlan.findUnique({
+        where: { slug: subscriptionSlug },
+      });
+
+      if (!plan) {
+        return NextResponse.json(
+          { error: "Invalid subscription plan" },
+          { status: 400 }
+        );
+      }
+
+      // Update subscriptionPlanId and sync all tier snapshot fields
+      updateData.subscriptionPlanId = plan.id;
+      updateData.subscription = subscriptionSlug as SubscriptionTier; // Keep deprecated field in sync
+      updateData.tierFreeCredits = plan.freeCredits;
+      updateData.tierWalletLimit = plan.walletLimit;
+      updateData.tierRedeemCredits = plan.redeemCredits;
+      updateData.tierRedeemCycleDays = plan.redeemCycleDays;
+      updateData.tierProfileLimit = plan.profileLimit;
+      updateData.tierPriceMonthly = plan.priceMonthly;
+      updateData.tierPriceYearly = plan.priceYearly;
+      updateData.subscribedAt = new Date(); // Mark when subscription changed
     }
 
     // Handle password reset (Super Admin can reset without old password)
@@ -186,29 +185,78 @@ export async function PATCH(
       updateData.isVerified = body.isVerified;
     }
 
-    // Update user
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        status: true,
-        subscription: true,
-        emailVerified: true,
-        phoneVerified: true,
-        isVerified: true,
-        updatedAt: true,
-      },
+    // Update user and wallet in a transaction
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      // Update the user
+      const user = await tx.user.update({
+        where: { id },
+        data: updateData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          role: true,
+          status: true,
+          subscription: true,
+          subscriptionPlanId: true,
+          tierFreeCredits: true,
+          tierWalletLimit: true,
+          tierRedeemCredits: true,
+          tierRedeemCycleDays: true,
+          tierProfileLimit: true,
+          emailVerified: true,
+          phoneVerified: true,
+          isVerified: true,
+          updatedAt: true,
+        },
+      });
+
+      // If subscription changed, also update the RedeemWallet
+      if (subscriptionSlug) {
+        const plan = await tx.subscriptionPlan.findUnique({
+          where: { slug: subscriptionSlug },
+        });
+
+        if (plan) {
+          // Calculate next redemption date
+          const nextRedemption = new Date();
+          nextRedemption.setDate(nextRedemption.getDate() + plan.redeemCycleDays);
+
+          await tx.redeemWallet.upsert({
+            where: { userId: id },
+            update: {
+              limit: plan.walletLimit,
+              redeemCredits: plan.redeemCredits,
+              redeemCycleDays: plan.redeemCycleDays,
+              // Add free credits from new plan (don't reset balance, add to it)
+              balance: {
+                increment: plan.freeCredits,
+              },
+              nextRedemption: nextRedemption,
+            },
+            create: {
+              userId: id,
+              balance: plan.freeCredits,
+              limit: plan.walletLimit,
+              redeemCredits: plan.redeemCredits,
+              redeemCycleDays: plan.redeemCycleDays,
+              lastRedeemed: new Date(),
+              nextRedemption: nextRedemption,
+            },
+          });
+        }
+      }
+
+      return user;
     });
 
     return NextResponse.json({
       success: true,
       message: body.newPassword
         ? "User updated successfully (password changed)"
+        : subscriptionSlug
+        ? "User updated successfully (subscription plan and benefits updated)"
         : "User updated successfully",
       user: updatedUser,
     });
