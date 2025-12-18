@@ -28,6 +28,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  BadgeCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 interface UserData {
@@ -273,6 +275,18 @@ export default function SettingsPage() {
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
+                  {/* Email verification status */}
+                  {userData?.emailVerified ? (
+                    <div className="flex items-center gap-1.5 text-green-600">
+                      <BadgeCheck className="h-4 w-4" />
+                      <span className="text-xs font-medium">Email verified</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-amber-600">
+                      <ShieldAlert className="h-4 w-4" />
+                      <span className="text-xs font-medium">Email not verified</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -284,8 +298,25 @@ export default function SettingsPage() {
                   value={phone}
                   onChange={setPhone}
                 />
+                {/* Phone verification status */}
+                {userData?.phone ? (
+                  userData?.phoneVerified ? (
+                    <div className="flex items-center gap-1.5 text-green-600">
+                      <BadgeCheck className="h-4 w-4" />
+                      <span className="text-xs font-medium">Phone verified</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-amber-600">
+                      <ShieldAlert className="h-4 w-4" />
+                      <span className="text-xs font-medium">Phone not verified</span>
+                    </div>
+                  )
+                ) : (
+                  <p className="text-xs text-gray-500">
+                    Add a phone number for account recovery and verification
+                  </p>
+                )}
                 <p className="text-xs text-gray-500">
-                  Your phone number is used for account recovery and verification.
                   Stored in international format (e.g., +923001234567)
                 </p>
               </div>

@@ -67,10 +67,10 @@ export async function PATCH(req: Request) {
       );
     }
 
-    // Check if email is being changed and if it's already taken
+    // Check if email or phone is being changed
     const currentUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true },
+      select: { email: true, phone: true },
     });
 
     if (email !== currentUser?.email) {
@@ -103,15 +103,22 @@ export async function PATCH(req: Request) {
       }
     }
 
+    // Determine if phone has changed
+    const newPhone = phone && phone.trim().length > 0 ? phone.trim() : null;
+    const phoneChanged = newPhone !== currentUser?.phone;
+    const emailChanged = email !== currentUser?.email;
+
     // Update user
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {
         name: name.trim(),
         email: email.trim(),
-        phone: phone && phone.trim().length > 0 ? phone.trim() : null,
+        phone: newPhone,
         // If email changed, mark as unverified
-        ...(email !== currentUser?.email && { emailVerified: false }),
+        ...(emailChanged && { emailVerified: false }),
+        // If phone changed, mark as unverified
+        ...(phoneChanged && { phoneVerified: false }),
       },
       select: {
         id: true,
