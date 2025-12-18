@@ -17,6 +17,8 @@ import {
 import Link from "next/link";
 import { isAdmin } from "@/lib/permissions";
 import { UserRole } from "@prisma/client";
+import { Logo } from "@/components/layout/header/Logo";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,11 +63,17 @@ export default function LoginPage() {
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome Back</CardTitle>
-          <CardDescription>Login to your NikahFirst account</CardDescription>
-        </CardHeader>
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <Logo size="lg" href="/" />
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Welcome Back</CardTitle>
+            <CardDescription>Login to your NikahFirst account</CardDescription>
+          </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div>
@@ -97,14 +105,26 @@ export default function LoginPage() {
               {form.loading ? "Logging in..." : "Login"}
             </Button>
             <p className="text-sm text-center text-slate-600">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/register" className="text-primary hover:underline">
                 Sign up
               </Link>
             </p>
           </CardFooter>
         </form>
-      </Card>
+        </Card>
+
+        {/* Back to Home */}
+        <div className="text-center mt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

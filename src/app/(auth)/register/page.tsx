@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { Loader2, Mail, KeyRound, CheckCircle, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/layout/header/Logo";
 
 type Step = "email" | "otp" | "password";
 
@@ -214,8 +215,14 @@ export default function RegisterPage() {
 
   return (
     <div className="container mx-auto flex items-center justify-center min-h-[calc(100vh-200px)] py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <Logo size="lg" href="/" />
+        </div>
+
+        <Card>
+          <CardHeader>
           <div className="flex items-center gap-2">
             {step !== "email" && (
               <Button
@@ -438,7 +445,19 @@ export default function RegisterPage() {
             </CardFooter>
           </form>
         )}
-      </Card>
+        </Card>
+
+        {/* Back to Home */}
+        <div className="text-center mt-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
