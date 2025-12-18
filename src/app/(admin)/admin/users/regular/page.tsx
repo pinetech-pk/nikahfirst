@@ -21,6 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Users,
   Search,
   Filter,
@@ -34,6 +44,7 @@ import {
   Diamond,
   UserPlus,
   Loader2,
+  Trash2,
 } from "lucide-react";
 
 interface User {
@@ -100,6 +111,11 @@ export default function RegularUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  // Delete state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -120,6 +136,40 @@ export default function RegularUsersPage() {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/admin/users/${userToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete user");
+      }
+
+      // Remove user from list and update stats
+      setUsers(users.filter((u) => u.id !== userToDelete.id));
+      setStats((prev) => ({
+        ...prev,
+        totalUsers: prev.totalUsers - 1,
+      }));
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete user");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -398,6 +448,14 @@ export default function RegularUsersPage() {
                                 Edit
                               </Button>
                             </Link>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleDeleteClick(user)}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -429,6 +487,47 @@ export default function RegularUsersPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{userToDelete?.name}</span> (
+              {userToDelete?.email})?
+              <br />
+              <br />
+              This action cannot be undone. This will permanently delete:
+              <ul className="list-disc list-inside mt-2 text-sm">
+                <li>User account and credentials</li>
+                <li>All profiles ({userToDelete?.profiles || 0} profile(s))</li>
+                <li>All uploaded photos</li>
+                <li>All connections and messages</li>
+                <li>Transaction history</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
