@@ -245,16 +245,16 @@ export default function PricingPage() {
                     ) : (
                       <div>
                         <div className="flex items-baseline justify-center gap-1">
-                          <span className="text-lg text-slate-500">Rs.</span>
+                          <span className="text-lg text-slate-500">$</span>
                           <span className="text-4xl font-bold text-slate-900">
-                            {Math.round(price).toLocaleString()}
+                            {price.toFixed(2)}
                           </span>
                           <span className="text-slate-500">/mo</span>
                         </div>
                         {billingCycle === "yearly" && plan.yearlyDiscountPct > 0 && (
                           <div className="mt-1">
                             <span className="text-sm text-emerald-600 font-medium">
-                              Rs. {getTotalYearlyPrice(plan).toLocaleString()}/year
+                              ${getTotalYearlyPrice(plan).toFixed(2)}/year
                             </span>
                             <Badge variant="secondary" className="ml-2 bg-emerald-100 text-emerald-700">
                               Save {plan.yearlyDiscountPct}%
