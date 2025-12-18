@@ -85,44 +85,28 @@ export default function PricingPage() {
     return plan.priceYearly;
   };
 
-  // Generate feature list based on plan attributes
+  // Generate feature list based on plan attributes - only 5 relevant features
   const generateFeatures = (plan: SubscriptionPlan): string[] => {
     const features: string[] = [];
 
-    // Start with custom features if they exist
-    if (plan.features && Array.isArray(plan.features)) {
-      features.push(...plan.features);
-    }
-
-    // Add standard features based on plan attributes
-    if (plan.freeCredits > 0) {
-      features.push(`${plan.freeCredits} free credits on signup`);
-    }
-
-    features.push(`${plan.redeemCredits} credit${plan.redeemCredits > 1 ? "s" : ""} every ${plan.redeemCycleDays} days`);
-    features.push(`Wallet limit of ${plan.walletLimit} credits`);
-
+    // 1. Active profiles
     if (plan.profileLimit > 1) {
-      features.push(`Create up to ${plan.profileLimit} profiles`);
+      features.push(`${plan.profileLimit} Active Profiles`);
     } else {
-      features.push("Create your profile");
+      features.push("1 Active Profile");
     }
 
-    // Add tier-specific features
-    if (plan.slug !== "FREE") {
-      features.push("Priority profile visibility");
-      features.push("Advanced search filters");
-    }
+    // 2. Free credits on signup
+    features.push(`${plan.freeCredits} free credits on signup`);
 
-    if (["GOLD", "PLATINUM", "PRO"].includes(plan.slug)) {
-      features.push("See who viewed your profile");
-      features.push("Verified badge on profile");
-    }
+    // 3. Credits redemption cycle
+    features.push(`${plan.redeemCredits} free credit${plan.redeemCredits > 1 ? "s" : ""} every ${plan.redeemCycleDays} days`);
 
-    if (["PLATINUM", "PRO"].includes(plan.slug)) {
-      features.push("Priority customer support");
-      features.push("Profile boost every month");
-    }
+    // 4. Redeem wallet limit
+    features.push(`Redeem Wallet limit of ${plan.walletLimit} credits`);
+
+    // 5. Funding wallet - no limit
+    features.push("No limit for Funding Wallet");
 
     return features;
   };
@@ -299,7 +283,7 @@ export default function PricingPage() {
 
                   {/* Features List */}
                   <ul className="space-y-3 mb-8 flex-grow">
-                    {features.slice(0, 8).map((feature, index) => (
+                    {features.map((feature, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <Check
                           className="h-5 w-5 shrink-0 mt-0.5"
