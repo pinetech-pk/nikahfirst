@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { UserRole, UserStatus, SubscriptionTier } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { BCRYPT } from "@/config/constants";
+import { deleteFromCloudinary } from "@/lib/cloudinary";
 
 /**
  * GET /api/admin/users/[id]
@@ -222,7 +223,7 @@ export async function PATCH(
 
 /**
  * DELETE /api/admin/users/[id]
- * Delete a specific admin user
+ * Delete a user and all associated data including Cloudinary images
  */
 export async function DELETE(
   req: Request,
@@ -242,7 +243,7 @@ export async function DELETE(
       );
     }
 
-    // Check if user exists
+    // Check if user exists and fetch all related data for cleanup
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
@@ -250,6 +251,17 @@ export async function DELETE(
         name: true,
         email: true,
         role: true,
+        profiles: {
+          select: {
+            id: true,
+            photos: {
+              select: {
+                id: true,
+                publicId: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -260,32 +272,38 @@ export async function DELETE(
       );
     }
 
-    // Delete related records first (Prisma doesn't have cascade delete configured)
-    await prisma.$transaction([
-      // Delete profiles
-      prisma.profile.deleteMany({
-        where: { userId: id },
-      }),
-      // Delete transactions
-      prisma.transaction.deleteMany({
-        where: { userId: id },
-      }),
-      // Delete wallets (one-to-one relationships)
-      prisma.redeemWallet.deleteMany({
-        where: { userId: id },
-      }),
-      prisma.fundingWallet.deleteMany({
-        where: { userId: id },
-      }),
-      // Finally delete the user
-      prisma.user.delete({
-        where: { id },
-      }),
-    ]);
+    // Step 1: Delete all photos from Cloudinary
+    const cloudinaryDeletions: Promise<boolean>[] = [];
+    let totalPhotos = 0;
+
+    for (const profile of user.profiles) {
+      for (const photo of profile.photos) {
+        if (photo.publicId) {
+          totalPhotos++;
+          cloudinaryDeletions.push(deleteFromCloudinary(photo.publicId));
+        }
+      }
+    }
+
+    // Wait for all Cloudinary deletions to complete
+    if (cloudinaryDeletions.length > 0) {
+      const results = await Promise.allSettled(cloudinaryDeletions);
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        console.warn(`Failed to delete ${failed} of ${totalPhotos} photos from Cloudinary`);
+      }
+    }
+
+    // Step 2: Delete user from database (cascade will handle related records)
+    // The Prisma schema has onDelete: Cascade for most relations
+    await prisma.user.delete({
+      where: { id },
+    });
 
     return NextResponse.json({
       success: true,
       message: `User ${user.name} (${user.email}) deleted successfully`,
+      deletedPhotos: totalPhotos,
     });
   } catch (error) {
     console.error("Error deleting user:", error);

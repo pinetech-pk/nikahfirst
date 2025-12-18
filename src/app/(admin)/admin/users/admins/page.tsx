@@ -1,6 +1,7 @@
-import { requireSupervisor } from "@/lib/authMiddleware";
-import { prisma } from "@/lib/prisma";
-import { getRoleBadge } from "@/lib/roleStyles";
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -12,6 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SimpleStatsCard } from "@/components/ui/stats-card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Crown,
   Shield,
   Edit as EditIcon,
@@ -20,11 +31,55 @@ import {
   Eye,
   UserPlus,
   Settings,
+  Loader2,
+  Trash2,
 } from "lucide-react";
-import Link from "next/link";
+
+interface AdminUser {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  status: string;
+  lastLoginAt: string | null;
+}
+
+interface Stats {
+  superAdminCount: number;
+  supervisorCount: number;
+  contentEditorCount: number;
+  supportAgentCount: number;
+}
+
+// Role badge styles
+function getRoleBadge(role: string) {
+  const badges: Record<string, { label: string; className: string }> = {
+    SUPER_ADMIN: {
+      label: "Super Admin",
+      className: "bg-red-100 text-red-800 border-red-200",
+    },
+    SUPERVISOR: {
+      label: "Supervisor",
+      className: "bg-blue-100 text-blue-800 border-blue-200",
+    },
+    CONTENT_EDITOR: {
+      label: "Content Editor",
+      className: "bg-purple-100 text-purple-800 border-purple-200",
+    },
+    SUPPORT_AGENT: {
+      label: "Support Agent",
+      className: "bg-orange-100 text-orange-800 border-orange-200",
+    },
+    CONSULTANT: {
+      label: "Consultant",
+      className: "bg-teal-100 text-teal-800 border-teal-200",
+    },
+  };
+  return badges[role] || { label: role, className: "bg-gray-100 text-gray-800" };
+}
 
 // Helper function to format "last active" time
-function formatLastActive(lastLoginAt: Date | null): {
+function formatLastActive(lastLoginAt: string | null): {
   text: string;
   isOnline: boolean;
 } {
@@ -33,17 +88,16 @@ function formatLastActive(lastLoginAt: Date | null): {
   }
 
   const now = new Date();
-  const diffMs = now.getTime() - lastLoginAt.getTime();
+  const lastLogin = new Date(lastLoginAt);
+  const diffMs = now.getTime() - lastLogin.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  // Online now (within last 5 minutes)
   if (diffMinutes < 5) {
     return { text: "Online now", isOnline: true };
   }
 
-  // Minutes ago
   if (diffMinutes < 60) {
     return {
       text: `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`,
@@ -51,7 +105,6 @@ function formatLastActive(lastLoginAt: Date | null): {
     };
   }
 
-  // Hours ago
   if (diffHours < 24) {
     return {
       text: `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`,
@@ -59,7 +112,6 @@ function formatLastActive(lastLoginAt: Date | null): {
     };
   }
 
-  // Days ago
   if (diffDays < 30) {
     return {
       text: `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`,
@@ -67,83 +119,136 @@ function formatLastActive(lastLoginAt: Date | null): {
     };
   }
 
-  // More than 30 days - show date
   return {
-    text: lastLoginAt.toLocaleDateString("en-US", {
+    text: lastLogin.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year:
-        lastLoginAt.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+        lastLogin.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
     }),
     isOnline: false,
   };
 }
 
-export default async function AdminUsersPage() {
-  // Check authentication and permissions
-  await requireSupervisor();
-
-  // Fetch admin role counts
-  const [
-    superAdminCount,
-    supervisorCount,
-    contentEditorCount,
-    supportAgentCount,
-  ] = await Promise.all([
-    prisma.user.count({ where: { role: "SUPER_ADMIN" } }),
-    prisma.user.count({ where: { role: "SUPERVISOR" } }),
-    prisma.user.count({ where: { role: "CONTENT_EDITOR" } }),
-    prisma.user.count({ where: { role: "SUPPORT_AGENT" } }),
-  ]);
-
-  // Fetch all admin users (exclude regular USER role)
-  const adminUsers = await prisma.user.findMany({
-    where: {
-      role: {
-        not: "USER",
-      },
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      status: true,
-      lastLoginAt: true,
-      createdAt: true,
-    },
-    orderBy: [
-      { role: "asc" }, // Sort by role hierarchy
-      { createdAt: "desc" }, // Then by creation date
-    ],
+export default function AdminUsersPage() {
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    superAdminCount: 0,
+    supervisorCount: 0,
+    contentEditorCount: 0,
+    supportAgentCount: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Delete state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/users/admins");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch admin users");
+      }
+
+      const data = await response.json();
+      setStats(data.stats);
+      setAdmins(data.admins);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (admin: AdminUser) => {
+    setAdminToDelete(admin);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!adminToDelete) return;
+
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/admin/users/${adminToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to delete admin");
+      }
+
+      // Remove admin from list and refresh stats
+      setAdmins(admins.filter((a) => a.id !== adminToDelete.id));
+      // Re-fetch to get updated counts
+      fetchAdmins();
+      setDeleteDialogOpen(false);
+      setAdminToDelete(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete admin");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const adminStats = [
     {
       title: "Super Admins",
-      value: superAdminCount.toString(),
+      value: stats.superAdminCount.toString(),
       icon: Crown,
       iconColor: "bg-red-100 text-red-600",
     },
     {
       title: "Supervisors",
-      value: supervisorCount.toString(),
+      value: stats.supervisorCount.toString(),
       icon: Shield,
       iconColor: "bg-blue-100 text-blue-600",
     },
     {
       title: "Content Editors",
-      value: contentEditorCount.toString(),
+      value: stats.contentEditorCount.toString(),
       icon: EditIcon,
       iconColor: "bg-purple-100 text-purple-600",
     },
     {
       title: "Support Agents",
-      value: supportAgentCount.toString(),
+      value: stats.supportAgentCount.toString(),
       icon: MessageSquare,
       iconColor: "bg-orange-100 text-orange-600",
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-gray-500">Loading admin users...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={fetchAdmins}>Try Again</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -186,7 +291,7 @@ export default async function AdminUsersPage() {
               <div>
                 <CardTitle>Admin Team</CardTitle>
                 <CardDescription>
-                  Total {adminUsers.length} admin users
+                  Total {admins.length} admin users
                 </CardDescription>
               </div>
               <div className="flex gap-2">
@@ -198,7 +303,7 @@ export default async function AdminUsersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {adminUsers.length === 0 ? (
+            {admins.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -237,7 +342,7 @@ export default async function AdminUsersPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {adminUsers.map((admin) => {
+                    {admins.map((admin) => {
                       const roleBadge = getRoleBadge(admin.role);
                       const lastActive = formatLastActive(admin.lastLoginAt);
 
@@ -248,7 +353,7 @@ export default async function AdminUsersPage() {
                         >
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
                                 {admin.name
                                   ? admin.name
                                       .split(" ")
@@ -319,6 +424,14 @@ export default async function AdminUsersPage() {
                                   Edit
                                 </Button>
                               </Link>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => handleDeleteClick(admin)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -381,6 +494,48 @@ export default async function AdminUsersPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Admin User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">
+                {adminToDelete?.name || adminToDelete?.email}
+              </span>
+              ?
+              <br />
+              <br />
+              This action cannot be undone. This will permanently delete the
+              admin account and all associated data.
+              {adminToDelete?.role === "SUPER_ADMIN" && (
+                <span className="block mt-2 text-red-600 font-medium">
+                  Warning: You are about to delete a Super Admin account.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Admin"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
