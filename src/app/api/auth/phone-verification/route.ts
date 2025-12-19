@@ -38,7 +38,7 @@ export async function GET() {
         verified: false,
         expiresAt: { gt: new Date() },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { requestedAt: "desc" },
       select: {
         id: true,
         phone: true,
@@ -202,7 +202,7 @@ export async function PUT(req: Request) {
         verified: false,
         expiresAt: { gt: new Date() },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { requestedAt: "desc" },
     });
 
     if (!verification) {
