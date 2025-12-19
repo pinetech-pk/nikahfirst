@@ -30,6 +30,9 @@ import {
   AlertCircle,
   BadgeCheck,
   ShieldAlert,
+  Phone,
+  Clock,
+  Send,
 } from "lucide-react";
 
 interface UserData {
@@ -39,6 +42,13 @@ interface UserData {
   phone: string | null;
   emailVerified: boolean;
   phoneVerified: boolean;
+}
+
+interface PhoneVerificationData {
+  id: string;
+  phone: string;
+  expiresAt: string;
+  requestedAt: string;
 }
 
 export default function SettingsPage() {
@@ -68,7 +78,17 @@ export default function SettingsPage() {
     text: string;
   } | null>(null);
 
-  // Fetch user data on mount
+  // Phone verification state
+  const [pendingVerification, setPendingVerification] = useState<PhoneVerificationData | null>(null);
+  const [verificationOtp, setVerificationOtp] = useState("");
+  const [isRequestingVerification, setIsRequestingVerification] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // Fetch user data and phone verification status on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -87,7 +107,22 @@ export default function SettingsPage() {
       }
     };
 
+    const fetchPhoneVerificationStatus = async () => {
+      try {
+        const response = await fetch("/api/auth/phone-verification");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.pendingVerification) {
+            setPendingVerification(data.pendingVerification);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch phone verification status:", error);
+      }
+    };
+
     fetchUserData();
+    fetchPhoneVerificationStatus();
   }, []);
 
   // Handle personal info save
@@ -185,6 +220,104 @@ export default function SettingsPage() {
     } finally {
       setIsSavingPassword(false);
     }
+  };
+
+  // Request phone verification
+  const handleRequestVerification = async () => {
+    setIsRequestingVerification(true);
+    setVerificationMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/phone-verification", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPendingVerification(data.verification);
+        setVerificationMessage({
+          type: "success",
+          text: data.message,
+        });
+      } else {
+        setVerificationMessage({
+          type: "error",
+          text: data.error || "Failed to request verification",
+        });
+      }
+    } catch {
+      setVerificationMessage({
+        type: "error",
+        text: "An error occurred. Please try again.",
+      });
+    } finally {
+      setIsRequestingVerification(false);
+    }
+  };
+
+  // Verify phone OTP
+  const handleVerifyOtp = async () => {
+    if (verificationOtp.length !== 6) {
+      setVerificationMessage({
+        type: "error",
+        text: "Please enter a valid 6-digit code",
+      });
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setVerificationMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/phone-verification", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp: verificationOtp }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setVerificationMessage({
+          type: "success",
+          text: data.message,
+        });
+        setPendingVerification(null);
+        setVerificationOtp("");
+        // Update user data to reflect verified status
+        setUserData((prev) => (prev ? { ...prev, phoneVerified: true } : null));
+      } else {
+        setVerificationMessage({
+          type: "error",
+          text: data.error || "Failed to verify code",
+        });
+      }
+    } catch {
+      setVerificationMessage({
+        type: "error",
+        text: "An error occurred. Please try again.",
+      });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // Calculate time remaining for verification
+  const getTimeRemaining = (expiresAt: string) => {
+    const expires = new Date(expiresAt);
+    const now = new Date();
+    const diff = expires.getTime() - now.getTime();
+
+    if (diff <= 0) return "Expired";
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m remaining`;
+    }
+    return `${minutes}m remaining`;
   };
 
   if (isLoading) {
@@ -334,6 +467,111 @@ export default function SettingsPage() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Phone Verification Section */}
+          {userData?.phone && !userData?.phoneVerified && (
+            <Card className="border-amber-200 bg-amber-50/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Phone className="h-5 w-5 text-amber-600" />
+                  Verify Your Phone Number
+                </CardTitle>
+                <CardDescription>
+                  Our team will contact you to verify your phone number
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {verificationMessage && (
+                  <div
+                    className={`flex items-center gap-2 p-3 rounded-lg ${
+                      verificationMessage.type === "success"
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    }`}
+                  >
+                    {verificationMessage.type === "success" ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4" />
+                    )}
+                    {verificationMessage.text}
+                  </div>
+                )}
+
+                {!pendingVerification ? (
+                  // No pending verification - show request button
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-600">
+                      Click the button below to request verification. Our team will contact you
+                      within 24 hours at <strong>{userData.phone}</strong> to share your verification code.
+                    </p>
+                    <Button
+                      onClick={handleRequestVerification}
+                      disabled={isRequestingVerification}
+                      className="bg-amber-600 hover:bg-amber-700"
+                    >
+                      {isRequestingVerification ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Requesting...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4 mr-2" />
+                          Request Verification Code
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  // Pending verification - show OTP entry
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Verification requested for <strong>{pendingVerification.phone}</strong></span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="h-4 w-4" />
+                      <span>{getTimeRemaining(pendingVerification.expiresAt)}</span>
+                    </div>
+
+                    <p className="text-sm text-gray-600">
+                      Our team will contact you to share your verification code.
+                      Enter the 6-digit code below:
+                    </p>
+
+                    <div className="flex gap-3">
+                      <Input
+                        type="text"
+                        placeholder="000000"
+                        value={verificationOtp}
+                        onChange={(e) => setVerificationOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        className="text-center text-xl tracking-widest font-mono max-w-[150px]"
+                        maxLength={6}
+                      />
+                      <Button
+                        onClick={handleVerifyOtp}
+                        disabled={isVerifyingOtp || verificationOtp.length !== 6}
+                      >
+                        {isVerifyingOtp ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Verifying...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Verify Code
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Change Password */}
           <Card>

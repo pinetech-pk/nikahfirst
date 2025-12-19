@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyPhoneUpdate } from "@/lib/notifications";
 
 // GET - Fetch current user's account data
 export async function GET() {
@@ -130,10 +131,27 @@ export async function PATCH(req: Request) {
       },
     });
 
+    // Send notifications if phone number changed
+    if (phoneChanged) {
+      // Fire and forget - don't block the response
+      notifyPhoneUpdate({
+        userId: session.user.id,
+        userName: updatedUser.name,
+        userEmail: updatedUser.email,
+        oldPhone: currentUser?.phone || null,
+        newPhone: newPhone,
+      }).catch((err) => {
+        console.error("Failed to send phone update notification:", err);
+      });
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Account updated successfully",
+      message: phoneChanged
+        ? "Account updated successfully. Phone verification required."
+        : "Account updated successfully",
       user: updatedUser,
+      phoneChanged,
     });
   } catch (error) {
     console.error("Error updating account:", error);

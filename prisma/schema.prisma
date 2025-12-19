@@ -52,6 +52,8 @@ model User {
   reviewedSuggestions FieldSuggestion[] @relation("ReviewedSuggestions")
   topUpRequests       TopUpRequest[]    @relation("UserTopUpRequests")
   processedTopUps     TopUpRequest[]    @relation("ProcessedTopUpRequests")
+  phoneVerifications  PhoneVerification[]
+  notificationsRead   AdminNotification[] @relation("NotificationReader")
 
   // Timestamps
   createdAt           DateTime          @default(now())
@@ -975,6 +977,84 @@ enum VerificationType {
   REGISTRATION     // New user registration
   PASSWORD_RESET   // Password reset request
   EMAIL_CHANGE     // Email change verification
+  PHONE_VERIFICATION // Phone number verification
+}
+
+// ============================================================================
+// SECTION 14C: PHONE VERIFICATION (MANUAL OTP)
+// ============================================================================
+
+model PhoneVerification {
+  id          String   @id @default(cuid())
+  userId      String
+  phone       String   // Phone number being verified
+  otp         String   // 6-digit OTP code
+  expiresAt   DateTime // Long expiry (24 hours for manual verification)
+  verified    Boolean  @default(false)
+  attempts    Int      @default(0)
+
+  // Admin tracking
+  requestedAt DateTime @default(now())
+  verifiedAt  DateTime?
+  verifiedBy  String?  // Admin who verified (if manual)
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phone])
+  @@index([phone, otp])
+  @@index([expiresAt])
+  @@map("phone_verifications")
+}
+
+// ============================================================================
+// SECTION 14D: ADMIN NOTIFICATIONS
+// ============================================================================
+
+model AdminNotification {
+  id          String    @id @default(cuid())
+  type        AdminNotificationType
+  title       String
+  message     String    @db.Text
+  data        Json?     // Extra data: { userId, userName, oldPhone, newPhone, etc. }
+  priority    NotificationPriority @default(NORMAL)
+
+  // Read status
+  isRead      Boolean   @default(false)
+  readById    String?   // Admin who marked it read
+  readBy      User?     @relation("NotificationReader", fields: [readById], references: [id], onDelete: SetNull)
+  readAt      DateTime?
+
+  // Target roles (empty array = all admins)
+  targetRoles UserRole[] @default([])
+
+  // Action link
+  actionUrl   String?   // Link to relevant page in admin panel
+
+  createdAt   DateTime  @default(now())
+
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("admin_notifications")
+}
+
+enum AdminNotificationType {
+  PHONE_UPDATE           // User updated phone number
+  PHONE_VERIFY_REQUEST   // User requested phone verification
+  PROFILE_PENDING        // New profile awaiting approval
+  NEW_USER               // New user registered
+  SUPPORT_TICKET         // New support request
+  TOP_UP_REQUEST         // New top-up request
+  PROFILE_REPORTED       // Profile reported by user
+  SYSTEM_ALERT           // System alert
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 // ============================================================================
