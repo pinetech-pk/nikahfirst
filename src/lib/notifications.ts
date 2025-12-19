@@ -137,10 +137,10 @@ export async function createAdminNotification(params: CreateAdminNotificationPar
         type: params.type,
         title: params.title,
         message: params.message,
-        data: params.data || null,
+        data: params.data,
         priority: params.priority || "NORMAL",
         targetRoles: params.targetRoles || [],
-        actionUrl: params.actionUrl || null,
+        actionUrl: params.actionUrl,
       },
     });
 
