@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { resend, emailConfig } from "@/lib/resend";
-import { AdminNotificationType, NotificationPriority, UserRole } from "@prisma/client";
+import { AdminNotificationType, NotificationPriority, UserRole, Prisma } from "@prisma/client";
 
 // ============================================================================
 // TYPES
@@ -137,7 +137,7 @@ export async function createAdminNotification(params: CreateAdminNotificationPar
         type: params.type,
         title: params.title,
         message: params.message,
-        data: params.data,
+        data: params.data as Prisma.InputJsonValue,
         priority: params.priority || "NORMAL",
         targetRoles: params.targetRoles || [],
         actionUrl: params.actionUrl,
