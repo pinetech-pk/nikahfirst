@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       const whereClause = {
         phone: { not: null },
         phoneVerified: false,
-        role: "USER", // Only regular users
+        role: "USER" as const, // Only regular users
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" as const } },
@@ -129,7 +129,7 @@ export async function GET(req: NextRequest) {
       // All users with phone verification status
       const whereClause = {
         phone: { not: null },
-        role: "USER",
+        role: "USER" as const,
         ...(search && {
           OR: [
             { name: { contains: search, mode: "insensitive" as const } },
