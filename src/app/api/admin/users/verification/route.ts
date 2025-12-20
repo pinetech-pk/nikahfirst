@@ -316,9 +316,9 @@ export async function POST(req: NextRequest) {
       // Send reminder emails to each user
       const results = await Promise.allSettled(
         users.map(async (user) => {
-          if (emailConfig.enabled && user.email) {
+          if (user.email) {
             await resend.emails.send({
-              from: emailConfig.fromNoReply,
+              from: emailConfig.from,
               to: user.email,
               subject: "Please Verify Your Phone Number - NikahFirst",
               html: `
