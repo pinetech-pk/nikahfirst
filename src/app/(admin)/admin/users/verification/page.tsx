@@ -58,7 +58,7 @@ interface UnverifiedUser {
   phone: string | null;
   phoneVerified: boolean;
   createdAt: string;
-  lastActive: string | null;
+  lastLoginAt: string | null;
   phoneVerifications: {
     id: string;
     requestedAt: string;
@@ -608,7 +608,7 @@ export default function UserVerificationPage() {
                             </td>
                             <td className="py-4 px-4">
                               <span className="text-sm text-gray-500">
-                                {formatRelativeTime(user.lastActive)}
+                                {formatRelativeTime(user.lastLoginAt)}
                               </span>
                             </td>
                             <td className="py-4 px-4">

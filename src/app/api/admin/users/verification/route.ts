@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
             phone: true,
             phoneVerified: true,
             createdAt: true,
-            lastActive: true,
+            lastLoginAt: true,
             phoneVerifications: {
               where: {
                 verified: false,
