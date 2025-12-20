@@ -100,6 +100,22 @@ export default function CreateProfilePage() {
       setEducationFields(educationFieldsData);
       setIncomeRanges(incomeRangesData);
       setLanguages(languagesData);
+
+      // Set Pakistani origin as default if not already set
+      if (originsData.length > 0) {
+        const pakistaniOrigin = originsData.find(
+          (o: LookupItem) => o.name?.toLowerCase().includes('pakistani') || o.name?.toLowerCase().includes('pakistan')
+        );
+        if (pakistaniOrigin) {
+          setFormData((prev) => {
+            // Only set if not already set (respects existing profile data)
+            if (!prev.originId) {
+              return { ...prev, originId: pakistaniOrigin.id };
+            }
+            return prev;
+          });
+        }
+      }
     };
 
     loadInitialData();
@@ -291,7 +307,12 @@ export default function CreateProfilePage() {
     setLoading(true);
     await saveStep();
     setLoading(false);
-    router.push("/profile/photos");
+    // Redirect to the working photo upload page with the profile ID
+    if (profileId) {
+      router.push(`/dashboard/profile/${profileId}/photos`);
+    } else {
+      router.push("/dashboard/profiles");
+    }
   };
 
   // Validation for each step
@@ -318,7 +339,7 @@ export default function CreateProfilePage() {
         if (!formData.ethnicityId) errors.push("Ethnicity");
         break;
       case 3:
-        if (!formData.countryOfOriginId) errors.push("Country of Origin");
+        if (!formData.countryOfOriginId) errors.push("Country of Birth / Origin");
         if (!formData.countryLivingInId) errors.push("Currently Living In");
         if (!formData.stateProvinceId) errors.push("State/Province");
         if (!formData.cityId) errors.push("City");
