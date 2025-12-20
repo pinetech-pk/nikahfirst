@@ -8,14 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -30,7 +22,6 @@ import {
   ShieldCheck,
   Search,
   Phone,
-  Mail,
   Clock,
   CheckCircle,
   XCircle,
@@ -40,8 +31,8 @@ import {
   AlertTriangle,
   Loader2,
   X,
+  Calendar,
 } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
 
 interface VerificationRequest {
   id: string;
@@ -80,6 +71,62 @@ interface PaginationInfo {
   limit: number;
   total: number;
   totalPages: number;
+}
+
+// Helper function to format relative time
+function formatRelativeTime(dateString: string | null): string {
+  if (!dateString) return "Never";
+
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return "Just now";
+  if (diffMins < 60) return `${diffMins} min ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  return formatDate(dateString);
+}
+
+// Helper function to format date
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// Helper function to format date with time
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+// Helper function to get time remaining
+function getTimeRemaining(expiresAt: string): string {
+  const expiry = new Date(expiresAt);
+  const now = new Date();
+  if (expiry <= now) return "Expired";
+
+  const diffMs = expiry.getTime() - now.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffHours > 0) return `${diffHours}h ${diffMins}m`;
+  return `${diffMins}m`;
 }
 
 export default function UserVerificationPage() {
@@ -237,13 +284,6 @@ export default function UserVerificationPage() {
     );
   };
 
-  const getTimeRemaining = (expiresAt: string) => {
-    const expiry = new Date(expiresAt);
-    const now = new Date();
-    if (expiry <= now) return "Expired";
-    return formatDistanceToNow(expiry, { addSuffix: true });
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -379,101 +419,103 @@ export default function UserVerificationPage() {
                   <p>No pending verification requests</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Phone Number</TableHead>
-                      <TableHead>OTP Code</TableHead>
-                      <TableHead>Requested</TableHead>
-                      <TableHead>Expires</TableHead>
-                      <TableHead>Attempts</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingRequests.map((request) => (
-                      <TableRow key={request.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                              <User className="h-5 w-5 text-gray-500" />
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">User</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Phone Number</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">OTP Code</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Requested</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Expires</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Attempts</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingRequests.map((request) => (
+                        <tr key={request.id} className="border-b hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                <User className="h-5 w-5 text-gray-500" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{request.user.name || "No Name"}</p>
+                                <p className="text-sm text-gray-500">{request.user.email}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium">{request.user.name || "No Name"}</p>
-                              <p className="text-sm text-gray-500">{request.user.email}</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-gray-400" />
+                              <span className="font-mono">{request.phone}</span>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-gray-400" />
-                            <span className="font-mono">{request.phone}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-mono text-lg">
-                            {request.otp}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-gray-500">
-                            {format(new Date(request.requestedAt), "MMM d, yyyy h:mm a")}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              new Date(request.expiresAt) > new Date() ? "outline" : "destructive"
-                            }
-                          >
-                            {getTimeRemaining(request.expiresAt)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{request.attempts} / 5</span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                setConfirmDialog({
-                                  open: true,
-                                  type: "verify",
-                                  data: { verificationId: request.id },
-                                })
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge variant="secondary" className="font-mono text-lg">
+                              {request.otp}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-sm text-gray-500">
+                              {formatDateTime(request.requestedAt)}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <Badge
+                              variant={
+                                new Date(request.expiresAt) > new Date() ? "outline" : "destructive"
                               }
-                              disabled={actionLoading === request.id}
                             >
-                              {actionLoading === request.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                              )}
-                              Verify
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                setConfirmDialog({
-                                  open: true,
-                                  type: "reject",
-                                  data: { verificationId: request.id },
-                                })
-                              }
-                              disabled={actionLoading === request.id}
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                              {getTimeRemaining(request.expiresAt)}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-sm">{request.attempts} / 5</span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  setConfirmDialog({
+                                    open: true,
+                                    type: "verify",
+                                    data: { verificationId: request.id },
+                                  })
+                                }
+                                disabled={actionLoading === request.id}
+                              >
+                                {actionLoading === request.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                )}
+                                Verify
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  setConfirmDialog({
+                                    open: true,
+                                    type: "reject",
+                                    data: { verificationId: request.id },
+                                  })
+                                }
+                                disabled={actionLoading === request.id}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </TabsContent>
 
@@ -509,80 +551,79 @@ export default function UserVerificationPage() {
                   <p>All users with phone numbers are verified</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={
-                            selectedUsers.length === unverifiedUsers.length &&
-                            unverifiedUsers.length > 0
-                          }
-                          onCheckedChange={toggleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead>User</TableHead>
-                      <TableHead>Phone Number</TableHead>
-                      <TableHead>Registered</TableHead>
-                      <TableHead>Last Active</TableHead>
-                      <TableHead>Request Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {unverifiedUsers.map((user) => {
-                      const hasPendingRequest = user.phoneVerifications.length > 0;
-                      return (
-                        <TableRow key={user.id}>
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedUsers.includes(user.id)}
-                              onCheckedChange={() => toggleSelectUser(user.id)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                <User className="h-5 w-5 text-gray-500" />
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-gray-50">
+                        <th className="text-left py-3 px-4 font-medium text-gray-700 w-12">
+                          <Checkbox
+                            checked={
+                              selectedUsers.length === unverifiedUsers.length &&
+                              unverifiedUsers.length > 0
+                            }
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">User</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Phone Number</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Registered</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Last Active</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">Request Status</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {unverifiedUsers.map((user) => {
+                        const hasPendingRequest = user.phoneVerifications.length > 0;
+                        return (
+                          <tr key={user.id} className="border-b hover:bg-gray-50">
+                            <td className="py-4 px-4">
+                              <Checkbox
+                                checked={selectedUsers.includes(user.id)}
+                                onCheckedChange={() => toggleSelectUser(user.id)}
+                              />
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                  <User className="h-5 w-5 text-gray-500" />
+                                </div>
+                                <div>
+                                  <p className="font-medium">{user.name || "No Name"}</p>
+                                  <p className="text-sm text-gray-500">{user.email}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium">{user.name || "No Name"}</p>
-                                <p className="text-sm text-gray-500">{user.email}</p>
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-2">
+                                <Phone className="h-4 w-4 text-gray-400" />
+                                <span className="font-mono">{user.phone}</span>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Phone className="h-4 w-4 text-gray-400" />
-                              <span className="font-mono">{user.phone}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-gray-500">
-                              {format(new Date(user.createdAt), "MMM d, yyyy")}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-gray-500">
-                              {user.lastActive
-                                ? formatDistanceToNow(new Date(user.lastActive), { addSuffix: true })
-                                : "Never"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {hasPendingRequest ? (
-                              <Badge variant="secondary" className="bg-amber-100 text-amber-800">
-                                <Clock className="h-3 w-3 mr-1" />
-                                Pending
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="text-gray-500">
-                                No Request
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            </td>
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-1 text-sm text-gray-500">
+                                <Calendar className="h-3 w-3" />
+                                {formatDate(user.createdAt)}
+                              </div>
+                            </td>
+                            <td className="py-4 px-4">
+                              <span className="text-sm text-gray-500">
+                                {formatRelativeTime(user.lastActive)}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4">
+                              {hasPendingRequest ? (
+                                <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Pending
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-gray-500">
+                                  No Request
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="py-4 px-4 text-right">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -602,13 +643,13 @@ export default function UserVerificationPage() {
                                 )}
                                 Verify
                               </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </TabsContent>
           </Tabs>
