@@ -36,6 +36,7 @@ import {
   Coins,
   Package,
   Sliders,
+  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -63,6 +64,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/users/create-admin": {
     section: "User Management",
     page: "Create Admin",
+  },
+  "/admin/users/verification": {
+    section: "User Management",
+    page: "User Verification",
   },
   "/admin/profiles/pending": {
     section: "Profile Management",
@@ -133,25 +138,34 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingTopUpCount, setPendingTopUpCount] = useState<number>(0);
+  const [pendingVerificationCount, setPendingVerificationCount] = useState<number>(0);
   const pathname = usePathname();
 
-  // Fetch pending top-up requests count
+  // Fetch pending counts
   useEffect(() => {
-    const fetchPendingCount = async () => {
+    const fetchPendingCounts = async () => {
       try {
-        const response = await fetch("/api/admin/topup-requests/pending-count");
-        if (response.ok) {
-          const data = await response.json();
+        // Fetch top-up requests count
+        const topUpResponse = await fetch("/api/admin/topup-requests/pending-count");
+        if (topUpResponse.ok) {
+          const data = await topUpResponse.json();
           setPendingTopUpCount(data.count || 0);
         }
+
+        // Fetch pending phone verification count
+        const verificationResponse = await fetch("/api/admin/users/verification/pending-count");
+        if (verificationResponse.ok) {
+          const data = await verificationResponse.json();
+          setPendingVerificationCount(data.count || 0);
+        }
       } catch (error) {
-        console.error("Failed to fetch pending top-up count:", error);
+        console.error("Failed to fetch pending counts:", error);
       }
     };
 
-    fetchPendingCount();
+    fetchPendingCounts();
     // Refresh count every 30 seconds
-    const interval = setInterval(fetchPendingCount, 30000);
+    const interval = setInterval(fetchPendingCounts, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -236,6 +250,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           icon: Shield,
           badge: "12",
           badgeColor: "secondary",
+        },
+        {
+          name: "User Verification",
+          href: "/admin/users/verification",
+          icon: ShieldCheck,
+          badge: pendingVerificationCount > 0 ? pendingVerificationCount.toString() : null,
+          badgeColor: "destructive",
         },
         {
           name: "Banned Users",
