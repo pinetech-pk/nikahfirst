@@ -30,13 +30,13 @@ export function StepLocation({
   return (
     <div className="space-y-6">
       <div>
-        <Label htmlFor="countryOfOrigin">Country of Origin *</Label>
+        <Label htmlFor="countryOfOrigin">Country of Birth / Origin *</Label>
         <Select
           value={formData.countryOfOriginId}
           onValueChange={(value) => updateFormData("countryOfOriginId", value)}
         >
           <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select country of origin" />
+            <SelectValue placeholder="Select country of birth" />
           </SelectTrigger>
           <SelectContent>
             {countries.map((item) => (
