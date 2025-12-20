@@ -29,6 +29,7 @@ export interface FormData {
   stateProvinceId: string;
   cityId: string;
   visaStatus: string;
+  suggestedLocation: string; // If user can't find their state/city
   // Step 4: Religion & Family
   sectId: string;
   maslakId: string;
@@ -74,6 +75,7 @@ export const initialFormData: FormData = {
   stateProvinceId: "",
   cityId: "",
   visaStatus: "",
+  suggestedLocation: "",
   sectId: "",
   maslakId: "",
   religiousBelonging: "",

@@ -286,7 +286,10 @@ model Profile {
   city                City?             @relation(fields: [cityId], references: [id])
   
   visaStatus          VisaStatus?       // Only if origin != living country
-  
+
+  // User-suggested location if not found in list (pending admin approval)
+  suggestedLocation   String?           @db.VarChar(200)
+
   // ==================== RELIGIOUS SECT ====================
   sectId              String?
   sect                Sect?             @relation(fields: [sectId], references: [id])
