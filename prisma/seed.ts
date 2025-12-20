@@ -990,12 +990,21 @@ async function seedLanguages() {
     { code: "other", slug: "other_language", label: "Other", labelNative: null, sortOrder: 99 },
   ];
 
+  // Both code and slug are unique, so check for existing records by either field
   for (const lang of languages) {
-    await prisma.language.upsert({
-      where: { code: lang.code },
-      update: { ...lang, isActive: true },
-      create: { ...lang, isActive: true },
+    const existing = await prisma.language.findFirst({
+      where: { OR: [{ code: lang.code }, { slug: lang.slug }] },
     });
+    if (existing) {
+      await prisma.language.update({
+        where: { id: existing.id },
+        data: { ...lang, isActive: true },
+      });
+    } else {
+      await prisma.language.create({
+        data: { ...lang, isActive: true },
+      });
+    }
   }
   console.log(`  ✓ ${languages.length} languages`);
 
@@ -1008,18 +1017,21 @@ async function seedLanguages() {
 async function main() {
   console.log("🚀 Starting database seeding...\n");
 
-  await seedSubscriptionPlans();
-  await seedCreditActions();
-  await seedCreditPackages();
-  await seedPaymentSettings();
-  await seedOriginsAndEthnicities();
-  await seedSectsAndMaslaks();
-  await seedCountries();
-  await seedStatesAndCities();
-  await seedHeights();
-  await seedEducationLevels();
-  await seedEducationFields();
-  await seedIncomeRanges();
+  // Already seeded successfully - uncomment if needed to re-run:
+  // await seedSubscriptionPlans();
+  // await seedCreditActions();
+  // await seedCreditPackages();
+  // await seedPaymentSettings();
+  // await seedOriginsAndEthnicities();
+  // await seedSectsAndMaslaks();
+  // await seedCountries();
+  // await seedStatesAndCities();
+  // await seedHeights();
+  // await seedEducationLevels();
+  // await seedEducationFields();
+  // await seedIncomeRanges();
+
+  // Remaining to seed:
   await seedLanguages();
 
   console.log("\n🎉 All seeding completed successfully!");
