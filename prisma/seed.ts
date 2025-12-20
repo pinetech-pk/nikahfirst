@@ -916,12 +916,22 @@ async function seedIncomeRanges() {
     { slug: "usd_prefer_not", label: "Prefer not to say", currency: "USD", period: "ANNUAL" as const, minValue: null, maxValue: null, sortOrder: 99 },
   ];
 
+  // For global ranges (null originId), we can't use upsert with composite keys
+  // So we use findFirst + create/update pattern
   for (const range of globalRanges) {
-    await prisma.incomeRange.upsert({
-      where: { originId_slug: { originId: null as unknown as string, slug: range.slug } },
-      update: { ...range, originId: null, isActive: true },
-      create: { ...range, originId: null, isActive: true },
+    const existing = await prisma.incomeRange.findFirst({
+      where: { slug: range.slug, originId: null },
     });
+    if (existing) {
+      await prisma.incomeRange.update({
+        where: { id: existing.id },
+        data: { ...range, originId: null, isActive: true },
+      });
+    } else {
+      await prisma.incomeRange.create({
+        data: { ...range, originId: null, isActive: true },
+      });
+    }
   }
   console.log(`  ✓ ${globalRanges.length} global income ranges (USD)`);
 
