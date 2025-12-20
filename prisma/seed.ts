@@ -992,7 +992,7 @@ async function seedLanguages() {
 
   for (const lang of languages) {
     await prisma.language.upsert({
-      where: { code: lang.code },
+      where: { slug: lang.slug },
       update: { ...lang, isActive: true },
       create: { ...lang, isActive: true },
     });
@@ -1008,18 +1008,21 @@ async function seedLanguages() {
 async function main() {
   console.log("🚀 Starting database seeding...\n");
 
-  await seedSubscriptionPlans();
-  await seedCreditActions();
-  await seedCreditPackages();
-  await seedPaymentSettings();
-  await seedOriginsAndEthnicities();
-  await seedSectsAndMaslaks();
-  await seedCountries();
-  await seedStatesAndCities();
-  await seedHeights();
-  await seedEducationLevels();
-  await seedEducationFields();
-  await seedIncomeRanges();
+  // Already seeded successfully - uncomment if needed to re-run:
+  // await seedSubscriptionPlans();
+  // await seedCreditActions();
+  // await seedCreditPackages();
+  // await seedPaymentSettings();
+  // await seedOriginsAndEthnicities();
+  // await seedSectsAndMaslaks();
+  // await seedCountries();
+  // await seedStatesAndCities();
+  // await seedHeights();
+  // await seedEducationLevels();
+  // await seedEducationFields();
+  // await seedIncomeRanges();
+
+  // Remaining to seed:
   await seedLanguages();
 
   console.log("\n🎉 All seeding completed successfully!");
