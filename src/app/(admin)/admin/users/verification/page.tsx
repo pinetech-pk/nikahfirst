@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   ShieldCheck,
   Search,
@@ -38,9 +39,9 @@ import {
   User,
   AlertTriangle,
   Loader2,
+  X,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
-import { toast } from "sonner";
 
 interface VerificationRequest {
   id: string;
@@ -100,6 +101,12 @@ export default function UserVerificationPage() {
     type: "verify" | "reject" | "reminder";
     data?: any;
   }>({ open: false, type: "verify" });
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const showMessage = (type: "success" | "error", text: string) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 5000);
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -124,7 +131,7 @@ export default function UserVerificationPage() {
       setPagination(result.pagination);
     } catch (error) {
       console.error("Error fetching verification data:", error);
-      toast.error("Failed to load verification data");
+      showMessage("error", "Failed to load verification data");
     } finally {
       setLoading(false);
     }
@@ -151,10 +158,10 @@ export default function UserVerificationPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
 
-      toast.success(result.message);
+      showMessage("success", result.message);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to verify user");
+      showMessage("error", error.message || "Failed to verify user");
     } finally {
       setActionLoading(null);
       setConfirmDialog({ open: false, type: "verify" });
@@ -176,10 +183,10 @@ export default function UserVerificationPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
 
-      toast.success(result.message);
+      showMessage("success", result.message);
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || "Failed to reject request");
+      showMessage("error", error.message || "Failed to reject request");
     } finally {
       setActionLoading(null);
       setConfirmDialog({ open: false, type: "reject" });
@@ -188,7 +195,7 @@ export default function UserVerificationPage() {
 
   const handleSendReminders = async () => {
     if (selectedUsers.length === 0) {
-      toast.error("Please select users to send reminders");
+      showMessage("error", "Please select users to send reminders");
       return;
     }
 
@@ -206,10 +213,10 @@ export default function UserVerificationPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
 
-      toast.success(result.message);
+      showMessage("success", result.message);
       setSelectedUsers([]);
     } catch (error: any) {
-      toast.error(error.message || "Failed to send reminders");
+      showMessage("error", error.message || "Failed to send reminders");
     } finally {
       setActionLoading(null);
       setConfirmDialog({ open: false, type: "reminder" });
@@ -249,6 +256,36 @@ export default function UserVerificationPage() {
           Manage phone verification requests and track unverified users
         </p>
       </div>
+
+      {/* Message Alert */}
+      {message && (
+        <Alert
+          className={`${
+            message.type === "success"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-red-50 border-red-200 text-red-800"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {message.type === "success" ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <AlertTriangle className="h-4 w-4" />
+              )}
+              <AlertDescription>{message.text}</AlertDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setMessage(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </Alert>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
