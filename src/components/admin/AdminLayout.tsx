@@ -37,6 +37,8 @@ import {
   Package,
   Sliders,
   ShieldCheck,
+  MapPin,
+  Globe2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -128,6 +130,14 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/global-settings/payment-settings": {
     section: "Global Settings",
     page: "Payment Settings",
+  },
+  "/admin/global-settings/locations": {
+    section: "Global Settings",
+    page: "Location Management",
+  },
+  "/admin/global-settings/origins": {
+    section: "Global Settings",
+    page: "Origin Management",
   },
   "/admin/financial/topup-requests": {
     section: "Financial",
@@ -398,6 +408,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Payment Settings",
           href: "/admin/global-settings/payment-settings",
           icon: CreditCard,
+          badge: null,
+        },
+        {
+          name: "Locations",
+          href: "/admin/global-settings/locations",
+          icon: MapPin,
+          badge: null,
+        },
+        {
+          name: "Origins",
+          href: "/admin/global-settings/origins",
+          icon: Globe2,
           badge: null,
         },
       ],

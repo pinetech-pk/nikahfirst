@@ -318,7 +318,9 @@ export default function CreateProfilePage() {
   // Validation for each step
   const isStep1Valid = formData.profileFor && formData.gender && formData.dateOfBirth && formData.maritalStatus;
   const isStep2Valid = formData.originId && formData.ethnicityId;
-  const isStep3Valid = formData.countryOfOriginId && formData.countryLivingInId && formData.stateProvinceId && formData.cityId;
+  // State/City are optional if suggestedLocation is provided
+  const isStep3Valid = formData.countryOfOriginId && formData.countryLivingInId &&
+    ((formData.stateProvinceId && formData.cityId) || formData.suggestedLocation);
   const isStep4Valid = formData.sectId && formData.religiousBelonging && formData.socialStatus;
   const isStep5Valid = formData.heightId && formData.complexion;
   const isStep6Valid = formData.educationLevelId && formData.educationFieldId && formData.occupationType && formData.incomeRangeId && formData.motherTongueId;
@@ -341,8 +343,11 @@ export default function CreateProfilePage() {
       case 3:
         if (!formData.countryOfOriginId) errors.push("Country of Birth / Origin");
         if (!formData.countryLivingInId) errors.push("Currently Living In");
-        if (!formData.stateProvinceId) errors.push("State/Province");
-        if (!formData.cityId) errors.push("City");
+        // State/City are only required if no suggestedLocation is provided
+        if (!formData.suggestedLocation) {
+          if (!formData.stateProvinceId) errors.push("State/Province");
+          if (!formData.cityId) errors.push("City");
+        }
         break;
       case 4:
         if (!formData.sectId) errors.push("Religious Sect");
