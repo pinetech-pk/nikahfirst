@@ -8,6 +8,12 @@ export interface LookupItem {
   countryId?: string;
   stateProvinceId?: string;
   sectId?: string;
+  // Origin terminology fields (for flexible labels)
+  level1Label?: string;
+  level1LabelPlural?: string;
+  level2Label?: string;
+  level2LabelPlural?: string;
+  level2Enabled?: boolean;
 }
 
 export interface FormData {
