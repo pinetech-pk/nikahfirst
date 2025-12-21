@@ -561,7 +561,6 @@ model Origin {
 
   // Relations
   ethnicities         Ethnicity[]
-  incomeRanges        IncomeRange[]
   profiles            Profile[]
 
   createdAt           DateTime          @default(now())
@@ -630,14 +629,16 @@ model Country {
   nameNative          String?
   phoneCode           String?           // +92, +1, etc.
   currency            String?           // PKR, INR, USD
+  currencySymbol      String?           // ₨, $, £, etc.
   sortOrder           Int               @default(0)
   isActive            Boolean           @default(true)
-  
+
   // Relations
   statesProvinces     StateProvince[]
   profilesOrigin      Profile[]         @relation("CountryOfOrigin")
   profilesLiving      Profile[]         @relation("CountryLivingIn")
-  
+  incomeRanges        IncomeRange[]
+
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
@@ -783,26 +784,26 @@ model EducationField {
 
 model IncomeRange {
   id                  String            @id @default(cuid())
-  originId            String?           // Null = global, otherwise origin-specific
-  origin              Origin?           @relation(fields: [originId], references: [id], onDelete: Cascade)
-  
+  countryId           String?           // Null = global, otherwise country-specific
+  country             Country?          @relation(fields: [countryId], references: [id], onDelete: Cascade)
+
   slug                String
-  label               String            // "75k - 125k PKR"
-  currency            String            // PKR, USD, GBP, etc.
+  label               String            // "75,000 - 125,000 PKR"
+  currency            String            // PKR, USD, GBP, CAD, etc.
   period              IncomePeriod      // MONTHLY, ANNUAL
   minValue            Int?              // For filtering/sorting
   maxValue            Int?
   sortOrder           Int               @default(0)
   isActive            Boolean           @default(true)
-  
+
   // Relations
   profiles            Profile[]
-  
+
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
-  @@unique([originId, slug])
-  @@index([originId])
+  @@unique([countryId, slug])
+  @@index([countryId])
   @@map("income_ranges")
 }
 

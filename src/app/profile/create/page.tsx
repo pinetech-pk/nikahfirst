@@ -121,6 +121,18 @@ export default function CreateProfilePage() {
     loadInitialData();
   }, [fetchLookup]);
 
+  // Refetch income ranges when country of residence changes
+  useEffect(() => {
+    if (formData.countryLivingInId) {
+      const loadIncomeRanges = async () => {
+        const data = await fetchLookup("incomeRange", formData.countryLivingInId);
+        setIncomeRanges(data);
+      };
+      loadIncomeRanges();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.countryLivingInId]);
+
   // Check for existing incomplete profile on mount
   useEffect(() => {
     const checkExistingProfile = async () => {
