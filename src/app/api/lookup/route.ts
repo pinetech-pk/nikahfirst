@@ -40,10 +40,26 @@ export async function GET(req: Request) {
         data = await prisma.origin.findMany({
           where: { isActive: true },
           orderBy: { sortOrder: "asc" },
-          select: { id: true, label: true },
+          select: {
+            id: true,
+            label: true,
+            level1Label: true,
+            level1LabelPlural: true,
+            level2Label: true,
+            level2LabelPlural: true,
+            level2Enabled: true,
+          },
         });
-        // Map label to name for frontend consistency
-        data = data.map((item) => ({ id: item.id, name: item.label }));
+        // Map label to name for frontend consistency, include terminology
+        data = data.map((item) => ({
+          id: item.id,
+          name: item.label,
+          level1Label: item.level1Label,
+          level1LabelPlural: item.level1LabelPlural,
+          level2Label: item.level2Label,
+          level2LabelPlural: item.level2LabelPlural,
+          level2Enabled: item.level2Enabled,
+        }));
         break;
 
       case "ethnicity":

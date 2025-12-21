@@ -549,12 +549,21 @@ model Origin {
   description         String?
   sortOrder           Int               @default(0)
   isActive            Boolean           @default(true)
-  
+
+  // Flexible terminology for sub-categories (region-aware)
+  // Level 1: Ethnicity (Pakistani), Tribe (Arab), Ethnic Group (African)
+  level1Label         String            @default("Ethnicity")
+  level1LabelPlural   String            @default("Ethnicities")
+  // Level 2: Caste (Pakistani), Sub-tribe (Arab), Clan (African)
+  level2Label         String            @default("Caste")
+  level2LabelPlural   String            @default("Castes")
+  level2Enabled       Boolean           @default(true) // Some origins may not need level 2
+
   // Relations
   ethnicities         Ethnicity[]
   incomeRanges        IncomeRange[]
   profiles            Profile[]
-  
+
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
