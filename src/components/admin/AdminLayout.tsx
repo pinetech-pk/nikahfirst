@@ -139,6 +139,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
     section: "Global Settings",
     page: "Origin Management",
   },
+  "/admin/global-settings/income": {
+    section: "Global Settings",
+    page: "Income Management",
+  },
   "/admin/financial/topup-requests": {
     section: "Financial",
     page: "Top-Up Requests",
@@ -420,6 +424,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Origins",
           href: "/admin/global-settings/origins",
           icon: Globe2,
+          badge: null,
+        },
+        {
+          name: "Income Ranges",
+          href: "/admin/global-settings/income",
+          icon: DollarSign,
           badge: null,
         },
       ],

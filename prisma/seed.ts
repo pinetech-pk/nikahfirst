@@ -899,65 +899,227 @@ async function seedEducationFields() {
 }
 
 // ============================================================================
-// INCOME RANGES
+// INCOME RANGES (Country-based)
 // ============================================================================
 async function seedIncomeRanges() {
   console.log("🌱 Seeding income ranges...");
 
-  // Global income ranges in USD (for diaspora)
+  // Helper to upsert income ranges for a country
+  const upsertIncomeRanges = async (
+    countryCode: string,
+    ranges: Array<{
+      slug: string;
+      label: string;
+      currency: string;
+      period: "MONTHLY" | "ANNUAL";
+      minValue: number | null;
+      maxValue: number | null;
+      sortOrder: number;
+    }>
+  ) => {
+    const country = await prisma.country.findUnique({ where: { code: countryCode } });
+    if (!country) {
+      console.log(`  ⚠️ Country ${countryCode} not found, skipping...`);
+      return 0;
+    }
+
+    for (const range of ranges) {
+      const existing = await prisma.incomeRange.findFirst({
+        where: { slug: range.slug, countryId: country.id },
+      });
+      if (existing) {
+        await prisma.incomeRange.update({
+          where: { id: existing.id },
+          data: { ...range, countryId: country.id, isActive: true },
+        });
+      } else {
+        await prisma.incomeRange.create({
+          data: { ...range, countryId: country.id, isActive: true },
+        });
+      }
+    }
+    return ranges.length;
+  };
+
+  // Global income ranges in USD (fallback for countries without specific ranges)
   const globalRanges = [
-    { slug: "usd_0_25k", label: "Under $25,000", currency: "USD", period: "ANNUAL" as const, minValue: 0, maxValue: 25000, sortOrder: 0 },
-    { slug: "usd_25k_50k", label: "$25,000 - $50,000", currency: "USD", period: "ANNUAL" as const, minValue: 25000, maxValue: 50000, sortOrder: 1 },
-    { slug: "usd_50k_75k", label: "$50,000 - $75,000", currency: "USD", period: "ANNUAL" as const, minValue: 50000, maxValue: 75000, sortOrder: 2 },
-    { slug: "usd_75k_100k", label: "$75,000 - $100,000", currency: "USD", period: "ANNUAL" as const, minValue: 75000, maxValue: 100000, sortOrder: 3 },
-    { slug: "usd_100k_150k", label: "$100,000 - $150,000", currency: "USD", period: "ANNUAL" as const, minValue: 100000, maxValue: 150000, sortOrder: 4 },
-    { slug: "usd_150k_200k", label: "$150,000 - $200,000", currency: "USD", period: "ANNUAL" as const, minValue: 150000, maxValue: 200000, sortOrder: 5 },
-    { slug: "usd_200k_plus", label: "$200,000+", currency: "USD", period: "ANNUAL" as const, minValue: 200000, maxValue: null, sortOrder: 6 },
-    { slug: "usd_prefer_not", label: "Prefer not to say", currency: "USD", period: "ANNUAL" as const, minValue: null, maxValue: null, sortOrder: 99 },
+    { slug: "global_0_25k", label: "Under $25,000", currency: "USD", period: "ANNUAL" as const, minValue: 0, maxValue: 25000, sortOrder: 0 },
+    { slug: "global_25k_50k", label: "$25,000 - $50,000", currency: "USD", period: "ANNUAL" as const, minValue: 25000, maxValue: 50000, sortOrder: 1 },
+    { slug: "global_50k_75k", label: "$50,000 - $75,000", currency: "USD", period: "ANNUAL" as const, minValue: 50000, maxValue: 75000, sortOrder: 2 },
+    { slug: "global_75k_100k", label: "$75,000 - $100,000", currency: "USD", period: "ANNUAL" as const, minValue: 75000, maxValue: 100000, sortOrder: 3 },
+    { slug: "global_100k_150k", label: "$100,000 - $150,000", currency: "USD", period: "ANNUAL" as const, minValue: 100000, maxValue: 150000, sortOrder: 4 },
+    { slug: "global_150k_plus", label: "$150,000+", currency: "USD", period: "ANNUAL" as const, minValue: 150000, maxValue: null, sortOrder: 5 },
   ];
 
-  // For global ranges (null originId), we can't use upsert with composite keys
-  // So we use findFirst + create/update pattern
   for (const range of globalRanges) {
     const existing = await prisma.incomeRange.findFirst({
-      where: { slug: range.slug, originId: null },
+      where: { slug: range.slug, countryId: null },
     });
     if (existing) {
       await prisma.incomeRange.update({
         where: { id: existing.id },
-        data: { ...range, originId: null, isActive: true },
+        data: { ...range, countryId: null, isActive: true },
       });
     } else {
       await prisma.incomeRange.create({
-        data: { ...range, originId: null, isActive: true },
+        data: { ...range, countryId: null, isActive: true },
       });
     }
   }
-  console.log(`  ✓ ${globalRanges.length} global income ranges (USD)`);
+  console.log(`  ✓ ${globalRanges.length} global fallback ranges (USD)`);
 
-  // Pakistani income ranges in PKR
-  const pakistaniOrigin = await prisma.origin.findUnique({ where: { slug: "pakistani" } });
-  if (pakistaniOrigin) {
-    const pkrRanges = [
-      { slug: "pkr_0_50k", label: "Under Rs. 50,000", currency: "PKR", period: "MONTHLY" as const, minValue: 0, maxValue: 50000, sortOrder: 0 },
-      { slug: "pkr_50k_100k", label: "Rs. 50,000 - Rs. 100,000", currency: "PKR", period: "MONTHLY" as const, minValue: 50000, maxValue: 100000, sortOrder: 1 },
-      { slug: "pkr_100k_200k", label: "Rs. 100,000 - Rs. 200,000", currency: "PKR", period: "MONTHLY" as const, minValue: 100000, maxValue: 200000, sortOrder: 2 },
-      { slug: "pkr_200k_300k", label: "Rs. 200,000 - Rs. 300,000", currency: "PKR", period: "MONTHLY" as const, minValue: 200000, maxValue: 300000, sortOrder: 3 },
-      { slug: "pkr_300k_500k", label: "Rs. 300,000 - Rs. 500,000", currency: "PKR", period: "MONTHLY" as const, minValue: 300000, maxValue: 500000, sortOrder: 4 },
-      { slug: "pkr_500k_1m", label: "Rs. 500,000 - Rs. 1,000,000", currency: "PKR", period: "MONTHLY" as const, minValue: 500000, maxValue: 1000000, sortOrder: 5 },
-      { slug: "pkr_1m_plus", label: "Rs. 1,000,000+", currency: "PKR", period: "MONTHLY" as const, minValue: 1000000, maxValue: null, sortOrder: 6 },
-      { slug: "pkr_prefer_not", label: "Prefer not to say", currency: "PKR", period: "MONTHLY" as const, minValue: null, maxValue: null, sortOrder: 99 },
-    ];
+  // ============= PAKISTAN (PKR - Monthly) =============
+  const pkRanges = [
+    { slug: "pk_0_50k", label: "Under Rs. 50,000", currency: "PKR", period: "MONTHLY" as const, minValue: 0, maxValue: 50000, sortOrder: 0 },
+    { slug: "pk_50k_100k", label: "Rs. 50,000 - Rs. 100,000", currency: "PKR", period: "MONTHLY" as const, minValue: 50000, maxValue: 100000, sortOrder: 1 },
+    { slug: "pk_100k_150k", label: "Rs. 100,000 - Rs. 150,000", currency: "PKR", period: "MONTHLY" as const, minValue: 100000, maxValue: 150000, sortOrder: 2 },
+    { slug: "pk_150k_250k", label: "Rs. 150,000 - Rs. 250,000", currency: "PKR", period: "MONTHLY" as const, minValue: 150000, maxValue: 250000, sortOrder: 3 },
+    { slug: "pk_250k_400k", label: "Rs. 250,000 - Rs. 400,000", currency: "PKR", period: "MONTHLY" as const, minValue: 250000, maxValue: 400000, sortOrder: 4 },
+    { slug: "pk_400k_700k", label: "Rs. 400,000 - Rs. 700,000", currency: "PKR", period: "MONTHLY" as const, minValue: 400000, maxValue: 700000, sortOrder: 5 },
+    { slug: "pk_700k_plus", label: "Rs. 700,000+", currency: "PKR", period: "MONTHLY" as const, minValue: 700000, maxValue: null, sortOrder: 6 },
+  ];
+  const pkCount = await upsertIncomeRanges("PK", pkRanges);
+  if (pkCount) console.log(`  ✓ ${pkCount} Pakistan income ranges (PKR)`);
 
-    for (const range of pkrRanges) {
-      await prisma.incomeRange.upsert({
-        where: { originId_slug: { originId: pakistaniOrigin.id, slug: range.slug } },
-        update: { ...range, isActive: true },
-        create: { ...range, originId: pakistaniOrigin.id, isActive: true },
-      });
-    }
-    console.log(`  ✓ ${pkrRanges.length} Pakistani income ranges (PKR)`);
-  }
+  // ============= USA (USD - Annual) =============
+  const usRanges = [
+    { slug: "us_0_30k", label: "Under $30,000", currency: "USD", period: "ANNUAL" as const, minValue: 0, maxValue: 30000, sortOrder: 0 },
+    { slug: "us_30k_50k", label: "$30,000 - $50,000", currency: "USD", period: "ANNUAL" as const, minValue: 30000, maxValue: 50000, sortOrder: 1 },
+    { slug: "us_50k_75k", label: "$50,000 - $75,000", currency: "USD", period: "ANNUAL" as const, minValue: 50000, maxValue: 75000, sortOrder: 2 },
+    { slug: "us_75k_100k", label: "$75,000 - $100,000", currency: "USD", period: "ANNUAL" as const, minValue: 75000, maxValue: 100000, sortOrder: 3 },
+    { slug: "us_100k_150k", label: "$100,000 - $150,000", currency: "USD", period: "ANNUAL" as const, minValue: 100000, maxValue: 150000, sortOrder: 4 },
+    { slug: "us_150k_250k", label: "$150,000 - $250,000", currency: "USD", period: "ANNUAL" as const, minValue: 150000, maxValue: 250000, sortOrder: 5 },
+    { slug: "us_250k_plus", label: "$250,000+", currency: "USD", period: "ANNUAL" as const, minValue: 250000, maxValue: null, sortOrder: 6 },
+  ];
+  const usCount = await upsertIncomeRanges("US", usRanges);
+  if (usCount) console.log(`  ✓ ${usCount} USA income ranges (USD)`);
+
+  // ============= CANADA (CAD - Annual) =============
+  const caRanges = [
+    { slug: "ca_0_30k", label: "Under C$30,000", currency: "CAD", period: "ANNUAL" as const, minValue: 0, maxValue: 30000, sortOrder: 0 },
+    { slug: "ca_30k_50k", label: "C$30,000 - C$50,000", currency: "CAD", period: "ANNUAL" as const, minValue: 30000, maxValue: 50000, sortOrder: 1 },
+    { slug: "ca_50k_75k", label: "C$50,000 - C$75,000", currency: "CAD", period: "ANNUAL" as const, minValue: 50000, maxValue: 75000, sortOrder: 2 },
+    { slug: "ca_75k_100k", label: "C$75,000 - C$100,000", currency: "CAD", period: "ANNUAL" as const, minValue: 75000, maxValue: 100000, sortOrder: 3 },
+    { slug: "ca_100k_150k", label: "C$100,000 - C$150,000", currency: "CAD", period: "ANNUAL" as const, minValue: 100000, maxValue: 150000, sortOrder: 4 },
+    { slug: "ca_150k_200k", label: "C$150,000 - C$200,000", currency: "CAD", period: "ANNUAL" as const, minValue: 150000, maxValue: 200000, sortOrder: 5 },
+    { slug: "ca_200k_plus", label: "C$200,000+", currency: "CAD", period: "ANNUAL" as const, minValue: 200000, maxValue: null, sortOrder: 6 },
+  ];
+  const caCount = await upsertIncomeRanges("CA", caRanges);
+  if (caCount) console.log(`  ✓ ${caCount} Canada income ranges (CAD)`);
+
+  // ============= UK (GBP - Annual) =============
+  const gbRanges = [
+    { slug: "gb_0_25k", label: "Under £25,000", currency: "GBP", period: "ANNUAL" as const, minValue: 0, maxValue: 25000, sortOrder: 0 },
+    { slug: "gb_25k_40k", label: "£25,000 - £40,000", currency: "GBP", period: "ANNUAL" as const, minValue: 25000, maxValue: 40000, sortOrder: 1 },
+    { slug: "gb_40k_60k", label: "£40,000 - £60,000", currency: "GBP", period: "ANNUAL" as const, minValue: 40000, maxValue: 60000, sortOrder: 2 },
+    { slug: "gb_60k_80k", label: "£60,000 - £80,000", currency: "GBP", period: "ANNUAL" as const, minValue: 60000, maxValue: 80000, sortOrder: 3 },
+    { slug: "gb_80k_120k", label: "£80,000 - £120,000", currency: "GBP", period: "ANNUAL" as const, minValue: 80000, maxValue: 120000, sortOrder: 4 },
+    { slug: "gb_120k_plus", label: "£120,000+", currency: "GBP", period: "ANNUAL" as const, minValue: 120000, maxValue: null, sortOrder: 5 },
+  ];
+  const gbCount = await upsertIncomeRanges("GB", gbRanges);
+  if (gbCount) console.log(`  ✓ ${gbCount} UK income ranges (GBP)`);
+
+  // ============= UAE (AED - Monthly) =============
+  const aeRanges = [
+    { slug: "ae_0_10k", label: "Under AED 10,000", currency: "AED", period: "MONTHLY" as const, minValue: 0, maxValue: 10000, sortOrder: 0 },
+    { slug: "ae_10k_20k", label: "AED 10,000 - AED 20,000", currency: "AED", period: "MONTHLY" as const, minValue: 10000, maxValue: 20000, sortOrder: 1 },
+    { slug: "ae_20k_35k", label: "AED 20,000 - AED 35,000", currency: "AED", period: "MONTHLY" as const, minValue: 20000, maxValue: 35000, sortOrder: 2 },
+    { slug: "ae_35k_50k", label: "AED 35,000 - AED 50,000", currency: "AED", period: "MONTHLY" as const, minValue: 35000, maxValue: 50000, sortOrder: 3 },
+    { slug: "ae_50k_80k", label: "AED 50,000 - AED 80,000", currency: "AED", period: "MONTHLY" as const, minValue: 50000, maxValue: 80000, sortOrder: 4 },
+    { slug: "ae_80k_plus", label: "AED 80,000+", currency: "AED", period: "MONTHLY" as const, minValue: 80000, maxValue: null, sortOrder: 5 },
+  ];
+  const aeCount = await upsertIncomeRanges("AE", aeRanges);
+  if (aeCount) console.log(`  ✓ ${aeCount} UAE income ranges (AED)`);
+
+  // ============= SAUDI ARABIA (SAR - Monthly) =============
+  const saRanges = [
+    { slug: "sa_0_10k", label: "Under SAR 10,000", currency: "SAR", period: "MONTHLY" as const, minValue: 0, maxValue: 10000, sortOrder: 0 },
+    { slug: "sa_10k_20k", label: "SAR 10,000 - SAR 20,000", currency: "SAR", period: "MONTHLY" as const, minValue: 10000, maxValue: 20000, sortOrder: 1 },
+    { slug: "sa_20k_35k", label: "SAR 20,000 - SAR 35,000", currency: "SAR", period: "MONTHLY" as const, minValue: 20000, maxValue: 35000, sortOrder: 2 },
+    { slug: "sa_35k_50k", label: "SAR 35,000 - SAR 50,000", currency: "SAR", period: "MONTHLY" as const, minValue: 35000, maxValue: 50000, sortOrder: 3 },
+    { slug: "sa_50k_80k", label: "SAR 50,000 - SAR 80,000", currency: "SAR", period: "MONTHLY" as const, minValue: 50000, maxValue: 80000, sortOrder: 4 },
+    { slug: "sa_80k_plus", label: "SAR 80,000+", currency: "SAR", period: "MONTHLY" as const, minValue: 80000, maxValue: null, sortOrder: 5 },
+  ];
+  const saCount = await upsertIncomeRanges("SA", saRanges);
+  if (saCount) console.log(`  ✓ ${saCount} Saudi Arabia income ranges (SAR)`);
+
+  // ============= QATAR (QAR - Monthly) =============
+  const qaRanges = [
+    { slug: "qa_0_15k", label: "Under QAR 15,000", currency: "QAR", period: "MONTHLY" as const, minValue: 0, maxValue: 15000, sortOrder: 0 },
+    { slug: "qa_15k_25k", label: "QAR 15,000 - QAR 25,000", currency: "QAR", period: "MONTHLY" as const, minValue: 15000, maxValue: 25000, sortOrder: 1 },
+    { slug: "qa_25k_40k", label: "QAR 25,000 - QAR 40,000", currency: "QAR", period: "MONTHLY" as const, minValue: 25000, maxValue: 40000, sortOrder: 2 },
+    { slug: "qa_40k_60k", label: "QAR 40,000 - QAR 60,000", currency: "QAR", period: "MONTHLY" as const, minValue: 40000, maxValue: 60000, sortOrder: 3 },
+    { slug: "qa_60k_plus", label: "QAR 60,000+", currency: "QAR", period: "MONTHLY" as const, minValue: 60000, maxValue: null, sortOrder: 4 },
+  ];
+  const qaCount = await upsertIncomeRanges("QA", qaRanges);
+  if (qaCount) console.log(`  ✓ ${qaCount} Qatar income ranges (QAR)`);
+
+  // ============= KUWAIT (KWD - Monthly) =============
+  const kwRanges = [
+    { slug: "kw_0_500", label: "Under KWD 500", currency: "KWD", period: "MONTHLY" as const, minValue: 0, maxValue: 500, sortOrder: 0 },
+    { slug: "kw_500_1000", label: "KWD 500 - KWD 1,000", currency: "KWD", period: "MONTHLY" as const, minValue: 500, maxValue: 1000, sortOrder: 1 },
+    { slug: "kw_1000_2000", label: "KWD 1,000 - KWD 2,000", currency: "KWD", period: "MONTHLY" as const, minValue: 1000, maxValue: 2000, sortOrder: 2 },
+    { slug: "kw_2000_3500", label: "KWD 2,000 - KWD 3,500", currency: "KWD", period: "MONTHLY" as const, minValue: 2000, maxValue: 3500, sortOrder: 3 },
+    { slug: "kw_3500_plus", label: "KWD 3,500+", currency: "KWD", period: "MONTHLY" as const, minValue: 3500, maxValue: null, sortOrder: 4 },
+  ];
+  const kwCount = await upsertIncomeRanges("KW", kwRanges);
+  if (kwCount) console.log(`  ✓ ${kwCount} Kuwait income ranges (KWD)`);
+
+  // ============= AUSTRALIA (AUD - Annual) =============
+  const auRanges = [
+    { slug: "au_0_40k", label: "Under A$40,000", currency: "AUD", period: "ANNUAL" as const, minValue: 0, maxValue: 40000, sortOrder: 0 },
+    { slug: "au_40k_60k", label: "A$40,000 - A$60,000", currency: "AUD", period: "ANNUAL" as const, minValue: 40000, maxValue: 60000, sortOrder: 1 },
+    { slug: "au_60k_90k", label: "A$60,000 - A$90,000", currency: "AUD", period: "ANNUAL" as const, minValue: 60000, maxValue: 90000, sortOrder: 2 },
+    { slug: "au_90k_120k", label: "A$90,000 - A$120,000", currency: "AUD", period: "ANNUAL" as const, minValue: 90000, maxValue: 120000, sortOrder: 3 },
+    { slug: "au_120k_180k", label: "A$120,000 - A$180,000", currency: "AUD", period: "ANNUAL" as const, minValue: 120000, maxValue: 180000, sortOrder: 4 },
+    { slug: "au_180k_plus", label: "A$180,000+", currency: "AUD", period: "ANNUAL" as const, minValue: 180000, maxValue: null, sortOrder: 5 },
+  ];
+  const auCount = await upsertIncomeRanges("AU", auRanges);
+  if (auCount) console.log(`  ✓ ${auCount} Australia income ranges (AUD)`);
+
+  // ============= GERMANY (EUR - Annual) =============
+  const deRanges = [
+    { slug: "de_0_30k", label: "Under €30,000", currency: "EUR", period: "ANNUAL" as const, minValue: 0, maxValue: 30000, sortOrder: 0 },
+    { slug: "de_30k_50k", label: "€30,000 - €50,000", currency: "EUR", period: "ANNUAL" as const, minValue: 30000, maxValue: 50000, sortOrder: 1 },
+    { slug: "de_50k_70k", label: "€50,000 - €70,000", currency: "EUR", period: "ANNUAL" as const, minValue: 50000, maxValue: 70000, sortOrder: 2 },
+    { slug: "de_70k_100k", label: "€70,000 - €100,000", currency: "EUR", period: "ANNUAL" as const, minValue: 70000, maxValue: 100000, sortOrder: 3 },
+    { slug: "de_100k_plus", label: "€100,000+", currency: "EUR", period: "ANNUAL" as const, minValue: 100000, maxValue: null, sortOrder: 4 },
+  ];
+  const deCount = await upsertIncomeRanges("DE", deRanges);
+  if (deCount) console.log(`  ✓ ${deCount} Germany income ranges (EUR)`);
+
+  // ============= MALAYSIA (MYR - Monthly) =============
+  const myRanges = [
+    { slug: "my_0_3k", label: "Under RM 3,000", currency: "MYR", period: "MONTHLY" as const, minValue: 0, maxValue: 3000, sortOrder: 0 },
+    { slug: "my_3k_5k", label: "RM 3,000 - RM 5,000", currency: "MYR", period: "MONTHLY" as const, minValue: 3000, maxValue: 5000, sortOrder: 1 },
+    { slug: "my_5k_10k", label: "RM 5,000 - RM 10,000", currency: "MYR", period: "MONTHLY" as const, minValue: 5000, maxValue: 10000, sortOrder: 2 },
+    { slug: "my_10k_20k", label: "RM 10,000 - RM 20,000", currency: "MYR", period: "MONTHLY" as const, minValue: 10000, maxValue: 20000, sortOrder: 3 },
+    { slug: "my_20k_plus", label: "RM 20,000+", currency: "MYR", period: "MONTHLY" as const, minValue: 20000, maxValue: null, sortOrder: 4 },
+  ];
+  const myCount = await upsertIncomeRanges("MY", myRanges);
+  if (myCount) console.log(`  ✓ ${myCount} Malaysia income ranges (MYR)`);
+
+  // ============= OMAN (OMR - Monthly) =============
+  const omRanges = [
+    { slug: "om_0_500", label: "Under OMR 500", currency: "OMR", period: "MONTHLY" as const, minValue: 0, maxValue: 500, sortOrder: 0 },
+    { slug: "om_500_1000", label: "OMR 500 - OMR 1,000", currency: "OMR", period: "MONTHLY" as const, minValue: 500, maxValue: 1000, sortOrder: 1 },
+    { slug: "om_1000_2000", label: "OMR 1,000 - OMR 2,000", currency: "OMR", period: "MONTHLY" as const, minValue: 1000, maxValue: 2000, sortOrder: 2 },
+    { slug: "om_2000_3500", label: "OMR 2,000 - OMR 3,500", currency: "OMR", period: "MONTHLY" as const, minValue: 2000, maxValue: 3500, sortOrder: 3 },
+    { slug: "om_3500_plus", label: "OMR 3,500+", currency: "OMR", period: "MONTHLY" as const, minValue: 3500, maxValue: null, sortOrder: 4 },
+  ];
+  const omCount = await upsertIncomeRanges("OM", omRanges);
+  if (omCount) console.log(`  ✓ ${omCount} Oman income ranges (OMR)`);
+
+  // ============= BAHRAIN (BHD - Monthly) =============
+  const bhRanges = [
+    { slug: "bh_0_500", label: "Under BHD 500", currency: "BHD", period: "MONTHLY" as const, minValue: 0, maxValue: 500, sortOrder: 0 },
+    { slug: "bh_500_1000", label: "BHD 500 - BHD 1,000", currency: "BHD", period: "MONTHLY" as const, minValue: 500, maxValue: 1000, sortOrder: 1 },
+    { slug: "bh_1000_2000", label: "BHD 1,000 - BHD 2,000", currency: "BHD", period: "MONTHLY" as const, minValue: 1000, maxValue: 2000, sortOrder: 2 },
+    { slug: "bh_2000_3000", label: "BHD 2,000 - BHD 3,000", currency: "BHD", period: "MONTHLY" as const, minValue: 2000, maxValue: 3000, sortOrder: 3 },
+    { slug: "bh_3000_plus", label: "BHD 3,000+", currency: "BHD", period: "MONTHLY" as const, minValue: 3000, maxValue: null, sortOrder: 4 },
+  ];
+  const bhCount = await upsertIncomeRanges("BH", bhRanges);
+  if (bhCount) console.log(`  ✓ ${bhCount} Bahrain income ranges (BHD)`);
 
   console.log("✅ Income ranges seeded successfully!");
 }

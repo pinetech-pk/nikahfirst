@@ -169,14 +169,30 @@ export async function GET(req: Request) {
         break;
 
       case "incomeRange":
-        data = await prisma.incomeRange.findMany({
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-          select: { id: true, label: true, currency: true },
-        });
-        data = data.map((item) => ({
+        // Income ranges are country-specific. parentId = countryId (country of residence)
+        // First try to get country-specific ranges, fall back to global ranges if none
+        if (parentId) {
+          data = await prisma.incomeRange.findMany({
+            where: { isActive: true, countryId: parentId },
+            orderBy: { sortOrder: "asc" },
+            select: { id: true, label: true, currency: true, period: true },
+          });
+        }
+
+        // If no country-specific ranges found, use global ranges (countryId = null)
+        if (!data || data.length === 0) {
+          data = await prisma.incomeRange.findMany({
+            where: { isActive: true, countryId: null },
+            orderBy: { sortOrder: "asc" },
+            select: { id: true, label: true, currency: true, period: true },
+          });
+        }
+
+        data = data.map((item: { id: string; label: string; currency: string; period: string }) => ({
           id: item.id,
           display: item.label,
+          currency: item.currency,
+          period: item.period,
         }));
         break;
 
