@@ -40,6 +40,7 @@ import {
   MapPin,
   Globe2,
   GraduationCap,
+  Moon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -147,6 +148,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/global-settings/education": {
     section: "Global Settings",
     page: "Education Management",
+  },
+  "/admin/global-settings/sects": {
+    section: "Global Settings",
+    page: "Sect Management",
   },
   "/admin/financial/topup-requests": {
     section: "Financial",
@@ -441,6 +446,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Education",
           href: "/admin/global-settings/education",
           icon: GraduationCap,
+          badge: null,
+        },
+        {
+          name: "Sects",
+          href: "/admin/global-settings/sects",
+          icon: Moon,
           badge: null,
         },
       ],
