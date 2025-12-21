@@ -50,6 +50,8 @@ import {
   CheckCircle,
   GripVertical,
   Users,
+  X,
+  Tag,
 } from "lucide-react";
 
 // Types
@@ -84,6 +86,7 @@ const emptyLevel = {
   yearsOfEducation: 0,
   sortOrder: 0,
   isActive: true,
+  tags: [] as string[],
 };
 
 const emptyField = {
@@ -92,6 +95,7 @@ const emptyField = {
   category: "",
   sortOrder: 0,
   isActive: true,
+  tags: [] as string[],
 };
 
 // Category options for education fields
@@ -186,6 +190,9 @@ export default function EducationPage() {
     }
   };
 
+  // Tag input state
+  const [tagInput, setTagInput] = useState("");
+
   // Dialog handlers
   const openLevelDialog = (level?: EducationLevel) => {
     setDialogType("level");
@@ -199,9 +206,11 @@ export default function EducationPage() {
             yearsOfEducation: level.yearsOfEducation,
             sortOrder: level.sortOrder,
             isActive: level.isActive,
+            tags: level.tags || [],
           }
         : emptyLevel
     );
+    setTagInput("");
     setSubmitError(null);
     setSubmitSuccess(null);
     setDialogOpen(true);
@@ -218,12 +227,34 @@ export default function EducationPage() {
             category: field.category || "",
             sortOrder: field.sortOrder,
             isActive: field.isActive,
+            tags: field.tags || [],
           }
         : emptyField
     );
+    setTagInput("");
     setSubmitError(null);
     setSubmitSuccess(null);
     setDialogOpen(true);
+  };
+
+  // Tag helpers
+  const addTag = () => {
+    const tag = tagInput.trim();
+    if (tag && !formData.tags.includes(tag)) {
+      setFormData({ ...formData, tags: [...formData.tags, tag] });
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData({ ...formData, tags: formData.tags.filter((t) => t !== tagToRemove) });
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTag();
+    }
   };
 
   // Submit handler
@@ -527,6 +558,7 @@ export default function EducationPage() {
                       <TableHead>Label</TableHead>
                       <TableHead>Level</TableHead>
                       <TableHead>Years</TableHead>
+                      <TableHead>Tags</TableHead>
                       <TableHead>Profiles</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -565,6 +597,19 @@ export default function EducationPage() {
                           <Badge variant="outline">{level.level}</Badge>
                         </TableCell>
                         <TableCell>{level.yearsOfEducation} yrs</TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {level.tags && level.tags.length > 0 ? (
+                              level.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{level.profileCount}</TableCell>
                         <TableCell>
                           <Badge
@@ -636,6 +681,7 @@ export default function EducationPage() {
                       <TableHead className="w-12">Order</TableHead>
                       <TableHead>Label</TableHead>
                       <TableHead>Category</TableHead>
+                      <TableHead>Tags</TableHead>
                       <TableHead>Profiles</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -676,6 +722,19 @@ export default function EducationPage() {
                           ) : (
                             <span className="text-gray-400">-</span>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {field.tags && field.tags.length > 0 ? (
+                              field.tags.map((tag) => (
+                                <Badge key={tag} variant="secondary" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-gray-400 text-sm">-</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>{field.profileCount}</TableCell>
                         <TableCell>
@@ -849,6 +908,47 @@ export default function EducationPage() {
                 </div>
               </>
             )}
+
+            {/* Tags Input */}
+            <div>
+              <Label htmlFor="tags">
+                <span className="flex items-center gap-1">
+                  <Tag className="h-3 w-3" />
+                  Tags
+                </span>
+              </Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="tags"
+                  placeholder="e.g., Doctor, Engineer, IT Specialist"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleTagKeyDown}
+                />
+                <Button type="button" variant="outline" onClick={addTag} disabled={!tagInput.trim()}>
+                  Add
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Press Enter or click Add to add a tag
+              </p>
+              {formData.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="ml-1 hover:text-red-500"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Active Toggle */}
             <div className="flex items-center gap-2">
