@@ -39,6 +39,7 @@ import {
   ShieldCheck,
   MapPin,
   Globe2,
+  GraduationCap,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -142,6 +143,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/global-settings/income": {
     section: "Global Settings",
     page: "Income Management",
+  },
+  "/admin/global-settings/education": {
+    section: "Global Settings",
+    page: "Education Management",
   },
   "/admin/financial/topup-requests": {
     section: "Financial",
@@ -430,6 +435,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Income Ranges",
           href: "/admin/global-settings/income",
           icon: DollarSign,
+          badge: null,
+        },
+        {
+          name: "Education",
+          href: "/admin/global-settings/education",
+          icon: GraduationCap,
           badge: null,
         },
       ],
