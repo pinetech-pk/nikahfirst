@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: RouteParams) {
             email: true,
             name: true,
             phone: true,
-            subscriptionTier: true,
+            subscription: true,
             status: true,
             createdAt: true,
           },

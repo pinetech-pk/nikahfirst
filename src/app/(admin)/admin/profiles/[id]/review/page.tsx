@@ -132,7 +132,7 @@ interface Profile {
     email: string;
     name: string | null;
     phone: string | null;
-    subscriptionTier: string;
+    subscription: string;
     status: string;
     createdAt: string;
   };
@@ -773,7 +773,7 @@ export default function ProfileReviewPage({
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Subscription</span>
-                <Badge variant="outline">{profile.user.subscriptionTier}</Badge>
+                <Badge variant="outline">{profile.user.subscription}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-500">Account Status</span>

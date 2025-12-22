@@ -67,7 +67,7 @@ interface Profile {
     id: string;
     email: string;
     name: string | null;
-    subscriptionTier: string;
+    subscription: string;
   };
   photos: Photo[];
   countryLivingIn: { label: string } | null;
@@ -412,8 +412,8 @@ export default function PendingProfilesPage() {
                           <h3 className="text-xl font-semibold">
                             {profile.user.name || profile.user.email.split("@")[0]}
                           </h3>
-                          <Badge className={getSubscriptionBadge(profile.user.subscriptionTier)}>
-                            {profile.user.subscriptionTier}
+                          <Badge className={getSubscriptionBadge(profile.user.subscription)}>
+                            {profile.user.subscription}
                           </Badge>
                           <Badge className={getMaritalStatusBadge(profile.maritalStatus)}>
                             {formatMaritalStatus(profile.maritalStatus)}

@@ -48,7 +48,7 @@ export async function GET(req: Request) {
               email: true,
               name: true,
               phone: true,
-              subscriptionTier: true,
+              subscription: true,
               createdAt: true,
             },
           },
