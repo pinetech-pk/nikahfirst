@@ -41,6 +41,7 @@ import {
   Globe2,
   GraduationCap,
   Moon,
+  Languages,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -152,6 +153,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/global-settings/sects": {
     section: "Global Settings",
     page: "Sect Management",
+  },
+  "/admin/global-settings/languages": {
+    section: "Global Settings",
+    page: "Mother Tongue Management",
   },
   "/admin/financial/topup-requests": {
     section: "Financial",
@@ -452,6 +457,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Sects",
           href: "/admin/global-settings/sects",
           icon: Moon,
+          badge: null,
+        },
+        {
+          name: "Mother Tongues",
+          href: "/admin/global-settings/languages",
+          icon: Languages,
           badge: null,
         },
       ],
