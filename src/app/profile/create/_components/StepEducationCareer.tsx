@@ -18,6 +18,7 @@ interface StepEducationCareerProps {
   educationFields: LookupItem[];
   incomeRanges: LookupItem[];
   languages: LookupItem[];
+  isOtherMotherTongueSelected: boolean; // Whether "Other" language is selected
 }
 
 export function StepEducationCareer({
@@ -27,6 +28,7 @@ export function StepEducationCareer({
   educationFields,
   incomeRanges,
   languages,
+  isOtherMotherTongueSelected,
 }: StepEducationCareerProps) {
   return (
     <div className="space-y-6">
@@ -133,23 +135,51 @@ export function StepEducationCareer({
       </div>
 
       <div>
-        <Label htmlFor="motherTongue">Mother Tongue *</Label>
+        <Label htmlFor="motherTongue">Mother Tongue</Label>
         <Select
           value={formData.motherTongueId}
-          onValueChange={(value) => updateFormData("motherTongueId", value)}
+          onValueChange={(value) => {
+            updateFormData("motherTongueId", value);
+            // Clear custom text if not selecting "Other"
+            const selectedLang = languages.find((l) => l.id === value);
+            if (!selectedLang?.isOther) {
+              updateFormData("otherMotherTongue", "");
+            }
+          }}
         >
           <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select mother tongue" />
+            <SelectValue placeholder="Select mother tongue (optional)" />
           </SelectTrigger>
           <SelectContent>
             {languages.map((item) => (
               <SelectItem key={item.id} value={item.id}>
-                {item.name}
+                {item.nameNative ? `${item.name} (${item.nameNative})` : item.name}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <p className="text-xs text-gray-500 mt-1">
+          Can&apos;t find your language? Select &quot;Other&quot; to suggest one.
+        </p>
       </div>
+
+      {/* Show text input when "Other" is selected */}
+      {isOtherMotherTongueSelected && (
+        <div>
+          <Label htmlFor="otherMotherTongue">Specify Your Mother Tongue *</Label>
+          <Input
+            id="otherMotherTongue"
+            placeholder="e.g., Shina, Burushaski, Khowar"
+            value={formData.otherMotherTongue}
+            onChange={(e) => updateFormData("otherMotherTongue", e.target.value)}
+            className="mt-1"
+            maxLength={50}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Your suggestion will be reviewed and may be added to our list.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

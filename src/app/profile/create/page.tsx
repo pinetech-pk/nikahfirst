@@ -133,6 +133,22 @@ export default function CreateProfilePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.countryLivingInId]);
 
+  // Refetch languages when country of origin changes
+  useEffect(() => {
+    if (formData.countryOfOriginId) {
+      const loadLanguages = async () => {
+        const data = await fetchLookup("language", formData.countryOfOriginId);
+        setLanguages(data);
+        // Reset mother tongue selection if current selection is no longer available
+        if (formData.motherTongueId && !data.find((l: LookupItem) => l.id === formData.motherTongueId)) {
+          setFormData((prev) => ({ ...prev, motherTongueId: "", otherMotherTongue: "" }));
+        }
+      };
+      loadLanguages();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.countryOfOriginId]);
+
   // Check for existing incomplete profile on mount
   useEffect(() => {
     const checkExistingProfile = async () => {
@@ -181,6 +197,7 @@ export default function CreateProfilePage() {
             occupationDetails: json.profile.occupationDetails || "",
             incomeRangeId: json.profile.incomeRangeId || "",
             motherTongueId: json.profile.motherTongueId || "",
+            otherMotherTongue: json.profile.otherMotherTongue || "",
             bio: json.profile.bio || "",
             originAudience: json.profile.originAudience || "SAME_ORIGIN",
           }));
@@ -335,7 +352,11 @@ export default function CreateProfilePage() {
     ((formData.stateProvinceId && formData.cityId) || formData.suggestedLocation);
   const isStep4Valid = formData.sectId && formData.religiousBelonging && formData.socialStatus;
   const isStep5Valid = formData.heightId && formData.complexion;
-  const isStep6Valid = formData.educationLevelId && formData.educationFieldId && formData.occupationType && formData.incomeRangeId && formData.motherTongueId;
+  // Check if "Other" language is selected
+  const isOtherMotherTongueSelected = languages.find((l) => l.id === formData.motherTongueId)?.isOther || false;
+  // Mother tongue is optional, but if "Other" is selected, otherMotherTongue is required
+  const isMotherTongueValid = !isOtherMotherTongueSelected || formData.otherMotherTongue.trim().length > 0;
+  const isStep6Valid = formData.educationLevelId && formData.educationFieldId && formData.occupationType && formData.incomeRangeId && isMotherTongueValid;
   const isStep7Valid = formData.bio && formData.bio.length >= MIN_BIO_LENGTH && formData.originAudience;
 
   // Get validation errors for current step
@@ -375,7 +396,11 @@ export default function CreateProfilePage() {
         if (!formData.educationFieldId) errors.push("Field of Study");
         if (!formData.occupationType) errors.push("Occupation Type");
         if (!formData.incomeRangeId) errors.push("Income Range");
-        if (!formData.motherTongueId) errors.push("Mother Tongue");
+        // Mother tongue is optional, but if "Other" is selected, custom text is required
+        const isOtherLangSelected = languages.find((l) => l.id === formData.motherTongueId)?.isOther || false;
+        if (isOtherLangSelected && !formData.otherMotherTongue.trim()) {
+          errors.push("Specify Your Mother Tongue");
+        }
         break;
       case 7:
         if (!formData.bio) errors.push("Bio");
@@ -384,7 +409,7 @@ export default function CreateProfilePage() {
         break;
     }
     return errors;
-  }, [formData]);
+  }, [formData, languages]);
 
   // Update validation errors when form data or step changes
   useEffect(() => {
@@ -456,6 +481,7 @@ export default function CreateProfilePage() {
             educationFields={educationFields}
             incomeRanges={incomeRanges}
             languages={languages}
+            isOtherMotherTongueSelected={isOtherMotherTongueSelected}
           />
         );
       case 7:

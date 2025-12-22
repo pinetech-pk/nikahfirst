@@ -26,7 +26,7 @@ function calculateCompletion(profile: Record<string, unknown>): number {
     "educationFieldId",
     "occupationType",
     "incomeRangeId",
-    "motherTongueId",
+    // motherTongueId is now optional - removed from required
     "bio",
   ];
 
@@ -230,6 +230,31 @@ export async function PATCH(req: Request) {
     if (updateData.occupationDetails !== undefined) prismaUpdateData.occupationDetails = updateData.occupationDetails || null;
     if (updateData.incomeRangeId !== undefined) prismaUpdateData.incomeRangeId = updateData.incomeRangeId || null;
     if (updateData.motherTongueId !== undefined) prismaUpdateData.motherTongueId = updateData.motherTongueId || null;
+    if (updateData.otherMotherTongue !== undefined) prismaUpdateData.otherMotherTongue = updateData.otherMotherTongue || null;
+
+    // Create suggestion for custom mother tongue if provided
+    if (updateData.otherMotherTongue && updateData.otherMotherTongue.trim()) {
+      // Check if suggestion already exists from this user
+      const existingSuggestion = await prisma.fieldSuggestion.findFirst({
+        where: {
+          userId: session.user.id,
+          fieldType: "MOTHER_TONGUE",
+          suggestedValue: updateData.otherMotherTongue.trim(),
+        },
+      });
+
+      if (!existingSuggestion) {
+        await prisma.fieldSuggestion.create({
+          data: {
+            userId: session.user.id,
+            fieldType: "MOTHER_TONGUE",
+            suggestedValue: updateData.otherMotherTongue.trim(),
+            suggestedLabel: updateData.otherMotherTongue.trim(),
+            status: "PENDING",
+          },
+        });
+      }
+    }
 
     // Step 7: Bio & Visibility
     if (updateData.bio !== undefined) prismaUpdateData.bio = updateData.bio || null;

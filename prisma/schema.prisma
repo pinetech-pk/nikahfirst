@@ -334,6 +334,7 @@ model Profile {
   // ==================== LANGUAGE ====================
   motherTongueId      String?
   motherTongue        Language?         @relation(fields: [motherTongueId], references: [id])
+  otherMotherTongue   String?           // For "Other" option - stores user's custom entry
   
   // ==================== PROFILE CONTENT ====================
   bio                 String?           @db.Text // About me
@@ -638,6 +639,7 @@ model Country {
   profilesOrigin      Profile[]         @relation("CountryOfOrigin")
   profilesLiving      Profile[]         @relation("CountryLivingIn")
   incomeRanges        IncomeRange[]
+  languages           CountryLanguage[] // Languages spoken in this country
 
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
@@ -841,15 +843,32 @@ model Language {
   labelNative         String?
   sortOrder           Int               @default(0)
   isActive            Boolean           @default(true)
-  
+  isGlobal            Boolean           @default(false) // If true, shown for all countries
+
   // Relations
   ethnicities         EthnicityLanguage[]
   profiles            Profile[]
-  
+  countries           CountryLanguage[] // Countries where this language is spoken
+
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
   @@map("languages")
+}
+
+// Junction table for Country <-> Language (for country-scoped mother tongues)
+model CountryLanguage {
+  id                  String            @id @default(cuid())
+  countryId           String
+  country             Country           @relation(fields: [countryId], references: [id], onDelete: Cascade)
+  languageId          String
+  language            Language          @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  sortOrder           Int               @default(0) // Order within country
+  isPrimary           Boolean           @default(false) // Is this a primary/national language
+
+  @@unique([countryId, languageId])
+  @@map("country_languages")
 }
 
 // Junction table for Ethnicity <-> Language
@@ -1208,6 +1227,7 @@ enum SuggestionFieldType {
   ETHNICITY
   CITY
   EDUCATION_FIELD
+  MOTHER_TONGUE
   OTHER
 }
 
