@@ -16,6 +16,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Wallet,
   Plus,
@@ -24,6 +32,7 @@ import {
   AlertCircle,
   History,
   User,
+  Pencil,
 } from "lucide-react";
 
 interface UserData {
@@ -61,9 +70,21 @@ export default function AddCreditsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Form state
+  // Form state for adding credits
   const [amount, setAmount] = useState<string>("");
   const [reason, setReason] = useState<string>("");
+
+  // Edit dialog state
+  const [editFundingDialogOpen, setEditFundingDialogOpen] = useState(false);
+  const [editRedeemDialogOpen, setEditRedeemDialogOpen] = useState(false);
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  // Edit form state
+  const [editFundingBalance, setEditFundingBalance] = useState<string>("");
+  const [editFundingReason, setEditFundingReason] = useState<string>("");
+  const [editRedeemBalance, setEditRedeemBalance] = useState<string>("");
+  const [editRedeemLimit, setEditRedeemLimit] = useState<string>("");
+  const [editRedeemReason, setEditRedeemReason] = useState<string>("");
 
   useEffect(() => {
     fetchUserData();
@@ -144,6 +165,113 @@ export default function AddCreditsPage() {
     }
   };
 
+  // Open funding wallet edit dialog
+  const openFundingEditDialog = () => {
+    setEditFundingBalance((user?.fundingWallet?.balance ?? 0).toString());
+    setEditFundingReason("");
+    setEditFundingDialogOpen(true);
+  };
+
+  // Open redeem wallet edit dialog
+  const openRedeemEditDialog = () => {
+    setEditRedeemBalance((user?.redeemWallet?.balance ?? 0).toString());
+    setEditRedeemLimit((user?.redeemWallet?.limit ?? 0).toString());
+    setEditRedeemReason("");
+    setEditRedeemDialogOpen(true);
+  };
+
+  // Handle funding wallet adjustment
+  const handleFundingAdjustment = async () => {
+    setEditSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    const newBalance = parseInt(editFundingBalance, 10);
+
+    if (isNaN(newBalance) || newBalance < 0) {
+      setError("Please enter a valid non-negative balance");
+      setEditSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/credits/adjust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          walletType: "FUNDING",
+          newBalance,
+          reason: editFundingReason.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to adjust funding wallet");
+      }
+
+      setSuccess(data.message);
+      setEditFundingDialogOpen(false);
+      fetchUserData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  // Handle redeem wallet adjustment
+  const handleRedeemAdjustment = async () => {
+    setEditSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    const newBalance = parseInt(editRedeemBalance, 10);
+    const newLimit = parseInt(editRedeemLimit, 10);
+
+    if (isNaN(newBalance) || newBalance < 0) {
+      setError("Please enter a valid non-negative balance");
+      setEditSubmitting(false);
+      return;
+    }
+
+    if (isNaN(newLimit) || newLimit < 0) {
+      setError("Please enter a valid non-negative limit");
+      setEditSubmitting(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/credits/adjust", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          walletType: "REDEEM",
+          newBalance,
+          newLimit,
+          reason: editRedeemReason.trim() || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to adjust redeem wallet");
+      }
+
+      setSuccess(data.message);
+      setEditRedeemDialogOpen(false);
+      fetchUserData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -182,9 +310,9 @@ export default function AddCreditsPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Add Credits</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Manage Credits</h1>
           <p className="text-gray-600 mt-1">
-            Add credits to user&apos;s funding wallet
+            Add credits or adjust wallet balances
           </p>
         </div>
       </div>
@@ -253,7 +381,7 @@ export default function AddCreditsPage() {
               )}
 
               {/* Error Message */}
-              {error && (
+              {error && user && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
                   <div>
@@ -334,7 +462,16 @@ export default function AddCreditsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Funding Wallet */}
-              <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="p-4 bg-blue-50 rounded-lg relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-100"
+                  onClick={openFundingEditDialog}
+                  title="Edit Funding Wallet"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <div className="flex items-center gap-2 mb-1">
                   <Wallet className="h-4 w-4 text-blue-600" />
                   <span className="text-sm text-gray-600">Funding Wallet</span>
@@ -346,7 +483,16 @@ export default function AddCreditsPage() {
               </div>
 
               {/* Redeem Wallet */}
-              <div className="p-4 bg-green-50 rounded-lg">
+              <div className="p-4 bg-green-50 rounded-lg relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                  onClick={openRedeemEditDialog}
+                  title="Edit Redeem Wallet"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <div className="flex items-center gap-2 mb-1">
                   <Wallet className="h-4 w-4 text-green-600" />
                   <span className="text-sm text-gray-600">Redeem Wallet</span>
@@ -428,6 +574,126 @@ export default function AddCreditsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Edit Funding Wallet Dialog */}
+      <Dialog open={editFundingDialogOpen} onOpenChange={setEditFundingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Funding Wallet</DialogTitle>
+            <DialogDescription>
+              Adjust the funding wallet balance. This action will be recorded in the transaction history.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-funding-balance">New Balance *</Label>
+              <Input
+                id="edit-funding-balance"
+                type="number"
+                min="0"
+                placeholder="Enter new balance"
+                value={editFundingBalance}
+                onChange={(e) => setEditFundingBalance(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                Current balance: {user?.fundingWallet?.balance ?? 0} credits
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-funding-reason">Reason (Optional)</Label>
+              <Textarea
+                id="edit-funding-reason"
+                placeholder="e.g., Subscription downgrade, Error correction, Testing..."
+                value={editFundingReason}
+                onChange={(e) => setEditFundingReason(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditFundingDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleFundingAdjustment} disabled={editSubmitting}>
+              {editSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Redeem Wallet Dialog */}
+      <Dialog open={editRedeemDialogOpen} onOpenChange={setEditRedeemDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Redeem Wallet</DialogTitle>
+            <DialogDescription>
+              Adjust the redeem wallet balance and credit limit. Changes will be recorded in the transaction history.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-redeem-balance">New Balance *</Label>
+              <Input
+                id="edit-redeem-balance"
+                type="number"
+                min="0"
+                placeholder="Enter new balance"
+                value={editRedeemBalance}
+                onChange={(e) => setEditRedeemBalance(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                Current balance: {user?.redeemWallet?.balance ?? 0} credits
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-redeem-limit">Credit Limit *</Label>
+              <Input
+                id="edit-redeem-limit"
+                type="number"
+                min="0"
+                placeholder="Enter new limit"
+                value={editRedeemLimit}
+                onChange={(e) => setEditRedeemLimit(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                Current limit: {user?.redeemWallet?.limit ?? 0} credits
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-redeem-reason">Reason (Optional)</Label>
+              <Textarea
+                id="edit-redeem-reason"
+                placeholder="e.g., Subscription tier change, Manual adjustment, Testing..."
+                value={editRedeemReason}
+                onChange={(e) => setEditRedeemReason(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRedeemDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRedeemAdjustment} disabled={editSubmitting}>
+              {editSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
