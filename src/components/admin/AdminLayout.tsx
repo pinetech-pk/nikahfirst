@@ -42,6 +42,7 @@ import {
   GraduationCap,
   Moon,
   Languages,
+  Lightbulb,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -162,12 +163,17 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
     section: "Financial",
     page: "Top-Up Requests",
   },
+  "/admin/suggestions": {
+    section: "Content Management",
+    page: "User Suggestions",
+  },
 };
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingTopUpCount, setPendingTopUpCount] = useState<number>(0);
   const [pendingVerificationCount, setPendingVerificationCount] = useState<number>(0);
+  const [pendingSuggestionsCount, setPendingSuggestionsCount] = useState<number>(0);
   const pathname = usePathname();
 
   // Fetch pending counts
@@ -186,6 +192,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         if (verificationResponse.ok) {
           const data = await verificationResponse.json();
           setPendingVerificationCount(data.count || 0);
+        }
+
+        // Fetch pending suggestions count
+        const suggestionsResponse = await fetch("/api/admin/suggestions?status=PENDING");
+        if (suggestionsResponse.ok) {
+          const data = await suggestionsResponse.json();
+          setPendingSuggestionsCount(data.counts?.pending || 0);
         }
       } catch (error) {
         console.error("Failed to fetch pending counts:", error);
@@ -322,6 +335,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           href: "/admin/profiles/verified",
           icon: Star,
           badge: null,
+        },
+      ],
+    },
+    {
+      title: "Content Management",
+      items: [
+        {
+          name: "User Suggestions",
+          href: "/admin/suggestions",
+          icon: Lightbulb,
+          badge: pendingSuggestionsCount > 0 ? pendingSuggestionsCount.toString() : null,
+          badgeColor: "destructive",
         },
       ],
     },
