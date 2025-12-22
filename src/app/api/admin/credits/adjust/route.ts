@@ -147,14 +147,19 @@ export async function POST(req: Request) {
 
         // Create redeem wallet if it doesn't exist
         if (!redeemWallet) {
+          const now = new Date();
+          const nextRedemption = new Date(now);
+          nextRedemption.setDate(nextRedemption.getDate() + 15); // Default 15 day cycle
+
           redeemWallet = await tx.redeemWallet.create({
             data: {
               userId: userId,
               balance: newBalance ?? 0,
               limit: newLimit ?? 50,
-              totalEarned: 0,
-              totalSpent: 0,
-              lastResetAt: new Date(),
+              redeemCredits: 1,
+              redeemCycleDays: 15,
+              lastRedeemed: now,
+              nextRedemption: nextRedemption,
             },
           });
         } else if (Object.keys(updateData).length > 0) {
