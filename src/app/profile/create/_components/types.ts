@@ -3,11 +3,13 @@ export interface LookupItem {
   id: string;
   name?: string;
   display?: string;
+  nameNative?: string;
   originId?: string;
   ethnicityId?: string;
   countryId?: string;
   stateProvinceId?: string;
   sectId?: string;
+  isOther?: boolean; // For "Other" options that require text input
   // Origin terminology fields (for flexible labels)
   level1Label?: string;
   level1LabelPlural?: string;
@@ -60,6 +62,7 @@ export interface FormData {
   occupationDetails: string;
   incomeRangeId: string;
   motherTongueId: string;
+  otherMotherTongue: string; // For "Other" option - user's custom entry
   // Step 7: Bio & Visibility
   bio: string;
   originAudience: string; // SAME_ORIGIN or ALL_ORIGINS
@@ -103,6 +106,7 @@ export const initialFormData: FormData = {
   occupationDetails: "",
   incomeRangeId: "",
   motherTongueId: "",
+  otherMotherTongue: "",
   bio: "",
   originAudience: "SAME_ORIGIN",
 };

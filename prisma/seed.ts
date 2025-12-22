@@ -1130,29 +1130,33 @@ async function seedIncomeRanges() {
 async function seedLanguages() {
   console.log("🌱 Seeding languages...");
 
+  // Languages with isGlobal flag - "Other" is shown for all countries
   const languages = [
-    { code: "ur", slug: "urdu", label: "Urdu", labelNative: "اردو", sortOrder: 0 },
-    { code: "en", slug: "english", label: "English", labelNative: "English", sortOrder: 1 },
-    { code: "pa", slug: "punjabi", label: "Punjabi", labelNative: "پنجابی", sortOrder: 2 },
-    { code: "ps", slug: "pashto", label: "Pashto", labelNative: "پښتو", sortOrder: 3 },
-    { code: "sd", slug: "sindhi", label: "Sindhi", labelNative: "سنڌي", sortOrder: 4 },
-    { code: "bal", slug: "balochi", label: "Balochi", labelNative: "بلوچی", sortOrder: 5 },
-    { code: "skr", slug: "saraiki", label: "Saraiki", labelNative: "سرائیکی", sortOrder: 6 },
-    { code: "kas", slug: "kashmiri", label: "Kashmiri", labelNative: "کٲشُر", sortOrder: 7 },
-    { code: "hnd", slug: "hindko", label: "Hindko", labelNative: "ہندکو", sortOrder: 8 },
-    { code: "ar", slug: "arabic", label: "Arabic", labelNative: "العربية", sortOrder: 9 },
-    { code: "hi", slug: "hindi", label: "Hindi", labelNative: "हिन्दी", sortOrder: 10 },
-    { code: "bn", slug: "bengali", label: "Bengali", labelNative: "বাংলা", sortOrder: 11 },
-    { code: "fa", slug: "persian", label: "Persian/Farsi", labelNative: "فارسی", sortOrder: 12 },
-    { code: "tr", slug: "turkish", label: "Turkish", labelNative: "Türkçe", sortOrder: 13 },
-    { code: "de", slug: "german", label: "German", labelNative: "Deutsch", sortOrder: 14 },
-    { code: "fr", slug: "french", label: "French", labelNative: "Français", sortOrder: 15 },
-    { code: "es", slug: "spanish", label: "Spanish", labelNative: "Español", sortOrder: 16 },
-    { code: "zh", slug: "chinese", label: "Chinese", labelNative: "中文", sortOrder: 17 },
-    { code: "other", slug: "other_language", label: "Other", labelNative: null, sortOrder: 99 },
+    { code: "ur", slug: "urdu", label: "Urdu", labelNative: "اردو", sortOrder: 0, isGlobal: false },
+    { code: "en", slug: "english", label: "English", labelNative: "English", sortOrder: 1, isGlobal: false },
+    { code: "pa", slug: "punjabi", label: "Punjabi", labelNative: "پنجابی", sortOrder: 2, isGlobal: false },
+    { code: "ps", slug: "pashto", label: "Pashto", labelNative: "پښتو", sortOrder: 3, isGlobal: false },
+    { code: "sd", slug: "sindhi", label: "Sindhi", labelNative: "سنڌي", sortOrder: 4, isGlobal: false },
+    { code: "bal", slug: "balochi", label: "Balochi", labelNative: "بلوچی", sortOrder: 5, isGlobal: false },
+    { code: "skr", slug: "saraiki", label: "Saraiki", labelNative: "سرائیکی", sortOrder: 6, isGlobal: false },
+    { code: "kas", slug: "kashmiri", label: "Kashmiri", labelNative: "کٲشُر", sortOrder: 7, isGlobal: false },
+    { code: "hnd", slug: "hindko", label: "Hindko", labelNative: "ہندکو", sortOrder: 8, isGlobal: false },
+    { code: "ar", slug: "arabic", label: "Arabic", labelNative: "العربية", sortOrder: 9, isGlobal: false },
+    { code: "hi", slug: "hindi", label: "Hindi", labelNative: "हिन्दी", sortOrder: 10, isGlobal: false },
+    { code: "bn", slug: "bengali", label: "Bengali", labelNative: "বাংলা", sortOrder: 11, isGlobal: false },
+    { code: "fa", slug: "persian", label: "Persian/Farsi", labelNative: "فارسی", sortOrder: 12, isGlobal: false },
+    { code: "tr", slug: "turkish", label: "Turkish", labelNative: "Türkçe", sortOrder: 13, isGlobal: false },
+    { code: "de", slug: "german", label: "German", labelNative: "Deutsch", sortOrder: 14, isGlobal: false },
+    { code: "fr", slug: "french", label: "French", labelNative: "Français", sortOrder: 15, isGlobal: false },
+    { code: "es", slug: "spanish", label: "Spanish", labelNative: "Español", sortOrder: 16, isGlobal: false },
+    { code: "zh", slug: "chinese", label: "Chinese", labelNative: "中文", sortOrder: 17, isGlobal: false },
+    { code: "other", slug: "other_language", label: "Other", labelNative: null, sortOrder: 99, isGlobal: true }, // Global - shown for all countries
   ];
 
-  // Both code and slug are unique, so check for existing records by either field
+  // Store language IDs by code for country associations
+  const languageIds: Record<string, string> = {};
+
+  // Upsert languages
   for (const lang of languages) {
     const existing = await prisma.language.findFirst({
       where: { OR: [{ code: lang.code }, { slug: lang.slug }] },
@@ -1162,13 +1166,199 @@ async function seedLanguages() {
         where: { id: existing.id },
         data: { ...lang, isActive: true },
       });
+      languageIds[lang.code] = existing.id;
     } else {
-      await prisma.language.create({
+      const created = await prisma.language.create({
         data: { ...lang, isActive: true },
       });
+      languageIds[lang.code] = created.id;
     }
   }
   console.log(`  ✓ ${languages.length} languages`);
+
+  // Now create country-language associations
+  console.log("  Creating country-language associations...");
+
+  // Get Pakistan's country ID
+  const pakistan = await prisma.country.findFirst({ where: { code: "PK" } });
+
+  if (pakistan) {
+    // Pakistani languages - the 8-9 major ones
+    const pakistaniLanguages = [
+      { code: "ur", sortOrder: 0, isPrimary: true }, // National language
+      { code: "pa", sortOrder: 1, isPrimary: false }, // Punjabi
+      { code: "ps", sortOrder: 2, isPrimary: false }, // Pashto
+      { code: "sd", sortOrder: 3, isPrimary: false }, // Sindhi
+      { code: "bal", sortOrder: 4, isPrimary: false }, // Balochi
+      { code: "skr", sortOrder: 5, isPrimary: false }, // Saraiki
+      { code: "hnd", sortOrder: 6, isPrimary: false }, // Hindko
+      { code: "kas", sortOrder: 7, isPrimary: false }, // Kashmiri
+      { code: "en", sortOrder: 8, isPrimary: false }, // English (widely spoken)
+    ];
+
+    for (const lang of pakistaniLanguages) {
+      const languageId = languageIds[lang.code];
+      if (languageId) {
+        await prisma.countryLanguage.upsert({
+          where: {
+            countryId_languageId: {
+              countryId: pakistan.id,
+              languageId: languageId,
+            },
+          },
+          update: { sortOrder: lang.sortOrder, isPrimary: lang.isPrimary },
+          create: {
+            countryId: pakistan.id,
+            languageId: languageId,
+            sortOrder: lang.sortOrder,
+            isPrimary: lang.isPrimary,
+          },
+        });
+      }
+    }
+    console.log(`  ✓ ${pakistaniLanguages.length} languages associated with Pakistan`);
+  }
+
+  // Add associations for India
+  const india = await prisma.country.findFirst({ where: { code: "IN" } });
+  if (india) {
+    const indianLanguages = [
+      { code: "hi", sortOrder: 0, isPrimary: true },
+      { code: "en", sortOrder: 1, isPrimary: false },
+      { code: "ur", sortOrder: 2, isPrimary: false },
+      { code: "pa", sortOrder: 3, isPrimary: false },
+      { code: "bn", sortOrder: 4, isPrimary: false },
+      { code: "kas", sortOrder: 5, isPrimary: false },
+    ];
+
+    for (const lang of indianLanguages) {
+      const languageId = languageIds[lang.code];
+      if (languageId) {
+        await prisma.countryLanguage.upsert({
+          where: {
+            countryId_languageId: {
+              countryId: india.id,
+              languageId: languageId,
+            },
+          },
+          update: { sortOrder: lang.sortOrder, isPrimary: lang.isPrimary },
+          create: {
+            countryId: india.id,
+            languageId: languageId,
+            sortOrder: lang.sortOrder,
+            isPrimary: lang.isPrimary,
+          },
+        });
+      }
+    }
+    console.log(`  ✓ ${indianLanguages.length} languages associated with India`);
+  }
+
+  // Add associations for Bangladesh
+  const bangladesh = await prisma.country.findFirst({ where: { code: "BD" } });
+  if (bangladesh) {
+    const bangladeshiLanguages = [
+      { code: "bn", sortOrder: 0, isPrimary: true },
+      { code: "en", sortOrder: 1, isPrimary: false },
+    ];
+
+    for (const lang of bangladeshiLanguages) {
+      const languageId = languageIds[lang.code];
+      if (languageId) {
+        await prisma.countryLanguage.upsert({
+          where: {
+            countryId_languageId: {
+              countryId: bangladesh.id,
+              languageId: languageId,
+            },
+          },
+          update: { sortOrder: lang.sortOrder, isPrimary: lang.isPrimary },
+          create: {
+            countryId: bangladesh.id,
+            languageId: languageId,
+            sortOrder: lang.sortOrder,
+            isPrimary: lang.isPrimary,
+          },
+        });
+      }
+    }
+    console.log(`  ✓ ${bangladeshiLanguages.length} languages associated with Bangladesh`);
+  }
+
+  // Add associations for UAE, Saudi Arabia (Arabic + English)
+  const arabCountries = await prisma.country.findMany({
+    where: { code: { in: ["AE", "SA", "QA", "KW", "BH", "OM"] } },
+  });
+
+  for (const country of arabCountries) {
+    const arabLanguages = [
+      { code: "ar", sortOrder: 0, isPrimary: true },
+      { code: "en", sortOrder: 1, isPrimary: false },
+      { code: "ur", sortOrder: 2, isPrimary: false }, // Large Pakistani community
+    ];
+
+    for (const lang of arabLanguages) {
+      const languageId = languageIds[lang.code];
+      if (languageId) {
+        await prisma.countryLanguage.upsert({
+          where: {
+            countryId_languageId: {
+              countryId: country.id,
+              languageId: languageId,
+            },
+          },
+          update: { sortOrder: lang.sortOrder, isPrimary: lang.isPrimary },
+          create: {
+            countryId: country.id,
+            languageId: languageId,
+            sortOrder: lang.sortOrder,
+            isPrimary: lang.isPrimary,
+          },
+        });
+      }
+    }
+  }
+  if (arabCountries.length > 0) {
+    console.log(`  ✓ Languages associated with ${arabCountries.length} Arab countries`);
+  }
+
+  // English-speaking countries (USA, UK, Canada, Australia)
+  const englishCountries = await prisma.country.findMany({
+    where: { code: { in: ["US", "GB", "CA", "AU"] } },
+  });
+
+  for (const country of englishCountries) {
+    const englishLangs = [
+      { code: "en", sortOrder: 0, isPrimary: true },
+      { code: "ur", sortOrder: 1, isPrimary: false }, // Pakistani community
+      { code: "pa", sortOrder: 2, isPrimary: false }, // Punjabi community
+      { code: "ar", sortOrder: 3, isPrimary: false }, // Arab community
+    ];
+
+    for (const lang of englishLangs) {
+      const languageId = languageIds[lang.code];
+      if (languageId) {
+        await prisma.countryLanguage.upsert({
+          where: {
+            countryId_languageId: {
+              countryId: country.id,
+              languageId: languageId,
+            },
+          },
+          update: { sortOrder: lang.sortOrder, isPrimary: lang.isPrimary },
+          create: {
+            countryId: country.id,
+            languageId: languageId,
+            sortOrder: lang.sortOrder,
+            isPrimary: lang.isPrimary,
+          },
+        });
+      }
+    }
+  }
+  if (englishCountries.length > 0) {
+    console.log(`  ✓ Languages associated with ${englishCountries.length} English-speaking countries`);
+  }
 
   console.log("✅ Languages seeded successfully!");
 }

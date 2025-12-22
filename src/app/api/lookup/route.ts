@@ -197,12 +197,57 @@ export async function GET(req: Request) {
         break;
 
       case "language":
-        data = await prisma.language.findMany({
-          where: { isActive: true },
-          orderBy: { sortOrder: "asc" },
-          select: { id: true, label: true },
-        });
-        data = data.map((item) => ({ id: item.id, name: item.label }));
+        // Languages are country-scoped. parentId = countryId (country of origin)
+        // First get country-specific languages, then add global languages
+        if (parentId) {
+          // Get languages associated with this country
+          const countryLanguages = await prisma.countryLanguage.findMany({
+            where: {
+              countryId: parentId,
+              language: { isActive: true },
+            },
+            orderBy: { sortOrder: "asc" },
+            include: {
+              language: {
+                select: { id: true, label: true, labelNative: true, slug: true },
+              },
+            },
+          });
+
+          // Get global languages (shown for all countries)
+          const globalLanguages = await prisma.language.findMany({
+            where: { isActive: true, isGlobal: true },
+            orderBy: { sortOrder: "asc" },
+            select: { id: true, label: true, labelNative: true, slug: true },
+          });
+
+          // Combine and deduplicate
+          const countryLangIds = new Set(countryLanguages.map((cl) => cl.language.id));
+          const combined = [
+            ...countryLanguages.map((cl) => cl.language),
+            ...globalLanguages.filter((gl) => !countryLangIds.has(gl.id)),
+          ];
+
+          data = combined.map((item) => ({
+            id: item.id,
+            name: item.label,
+            nameNative: item.labelNative,
+            isOther: item.slug === "other_language",
+          }));
+        } else {
+          // No country specified - return all active languages
+          data = await prisma.language.findMany({
+            where: { isActive: true },
+            orderBy: { sortOrder: "asc" },
+            select: { id: true, label: true, labelNative: true, slug: true },
+          });
+          data = data.map((item: { id: string; label: string; labelNative: string | null; slug: string }) => ({
+            id: item.id,
+            name: item.label,
+            nameNative: item.labelNative,
+            isOther: item.slug === "other_language",
+          }));
+        }
         break;
 
       default:
