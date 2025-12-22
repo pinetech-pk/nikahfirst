@@ -62,16 +62,16 @@ export async function GET(req: Request) {
             orderBy: { sortOrder: "asc" },
           },
           countryOfOrigin: {
-            select: { id: true, label: true },
+            select: { id: true, name: true },
           },
           countryLivingIn: {
-            select: { id: true, label: true },
+            select: { id: true, name: true },
           },
           stateProvince: {
-            select: { id: true, label: true },
+            select: { id: true, name: true },
           },
           city: {
-            select: { id: true, label: true },
+            select: { id: true, name: true },
           },
           origin: {
             select: { id: true, label: true },
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
             select: { id: true, label: true },
           },
           height: {
-            select: { id: true, label: true, valueInCm: true },
+            select: { id: true, labelImperial: true, centimeters: true },
           },
         },
       }),

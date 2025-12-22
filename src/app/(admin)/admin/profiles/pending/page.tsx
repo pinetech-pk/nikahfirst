@@ -70,8 +70,8 @@ interface Profile {
     subscription: string;
   };
   photos: Photo[];
-  countryLivingIn: { label: string } | null;
-  city: { label: string } | null;
+  countryLivingIn: { name: string } | null;
+  city: { name: string } | null;
   educationLevel: { label: string } | null;
   educationField: { label: string } | null;
 }
@@ -251,8 +251,8 @@ export default function PendingProfilesPage() {
 
   const getLocation = (profile: Profile) => {
     const parts = [];
-    if (profile.city?.label) parts.push(profile.city.label);
-    if (profile.countryLivingIn?.label) parts.push(profile.countryLivingIn.label);
+    if (profile.city?.name) parts.push(profile.city.name);
+    if (profile.countryLivingIn?.name) parts.push(profile.countryLivingIn.name);
     return parts.join(", ") || "Not specified";
   };
 

@@ -87,10 +87,10 @@ interface Profile {
   isVerified: boolean;
   isActive: boolean;
   // Location
-  countryOfOrigin: { id: string; label: string } | null;
-  countryLivingIn: { id: string; label: string } | null;
-  stateProvince: { id: string; label: string } | null;
-  city: { id: string; label: string } | null;
+  countryOfOrigin: { id: string; name: string } | null;
+  countryLivingIn: { id: string; name: string } | null;
+  stateProvince: { id: string; name: string } | null;
+  city: { id: string; name: string } | null;
   visaStatus: string | null;
   // Origin & Ethnicity
   origin: { id: string; label: string } | null;
@@ -110,7 +110,7 @@ interface Profile {
   fatherOccupation: string | null;
   propertyOwnership: string | null;
   // Physical
-  height: { id: string; label: string; valueInCm: number } | null;
+  height: { id: string; labelImperial: string; centimeters: number } | null;
   complexion: string | null;
   hasDisability: boolean;
   disabilityDetails: string | null;
@@ -423,19 +423,19 @@ export default function ProfileReviewPage({
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Country of Origin</p>
-                  <p className="font-medium">{profile.countryOfOrigin?.label || "Not specified"}</p>
+                  <p className="font-medium">{profile.countryOfOrigin?.name || "Not specified"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">Currently Living In</p>
-                  <p className="font-medium">{profile.countryLivingIn?.label || "Not specified"}</p>
+                  <p className="font-medium">{profile.countryLivingIn?.name || "Not specified"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">State/Province</p>
-                  <p className="font-medium">{profile.stateProvince?.label || "Not specified"}</p>
+                  <p className="font-medium">{profile.stateProvince?.name || "Not specified"}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-500">City</p>
-                  <p className="font-medium">{profile.city?.label || "Not specified"}</p>
+                  <p className="font-medium">{profile.city?.name || "Not specified"}</p>
                 </div>
                 {profile.visaStatus && (
                   <div>
@@ -553,7 +553,7 @@ export default function ProfileReviewPage({
                 <div>
                   <p className="text-sm font-medium text-gray-500">Height</p>
                   <p className="font-medium">
-                    {profile.height ? `${profile.height.label} (${profile.height.valueInCm} cm)` : "Not specified"}
+                    {profile.height ? `${profile.height.labelImperial} (${profile.height.centimeters} cm)` : "Not specified"}
                   </p>
                 </div>
                 <div>
