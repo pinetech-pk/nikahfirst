@@ -74,6 +74,11 @@ export async function GET(req: Request) {
           educationField: { select: { id: true, label: true } },
           incomeRange: { select: { id: true, label: true } },
           motherTongue: { select: { id: true, label: true } },
+          _count: {
+            select: {
+              photos: true,
+            },
+          },
         },
       });
 
@@ -302,6 +307,73 @@ export async function PATCH(req: Request) {
     console.error("Profile update error:", error);
     return NextResponse.json(
       { error: "Failed to update profile" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Delete user's own profile
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const profileId = searchParams.get("id");
+
+    if (!profileId) {
+      return NextResponse.json(
+        { error: "Profile ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Verify profile belongs to user
+    const profile = await prisma.profile.findFirst({
+      where: {
+        id: profileId,
+        userId: session.user.id,
+      },
+      select: {
+        id: true,
+        _count: {
+          select: {
+            photos: true,
+            sentConnections: true,
+            receivedConnections: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: "Profile not found" },
+        { status: 404 }
+      );
+    }
+
+    // Delete the profile (cascades to photos, connections, etc.)
+    await prisma.profile.delete({
+      where: { id: profileId },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Profile deleted successfully",
+      deletedCounts: {
+        photos: profile._count.photos,
+        sentConnections: profile._count.sentConnections,
+        receivedConnections: profile._count.receivedConnections,
+      },
+    });
+  } catch (error) {
+    console.error("Profile delete error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete profile" },
       { status: 500 }
     );
   }
