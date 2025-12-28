@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
 // Helper function to get redeem action credits
 async function getRedeemActionCredits(slug: string): Promise<number> {
   try {
@@ -13,6 +14,55 @@ async function getRedeemActionCredits(slug: string): Promise<number> {
   } catch {
     return 0; // Return 0 if RedeemAction table doesn't exist yet
   }
+}
+
+// Helper function to award redeem credits with wallet limit enforcement
+interface AwardResult {
+  awarded: number;
+  wasted: number;
+  newBalance: number;
+  limitReached: boolean;
+}
+
+async function awardRedeemCredits(
+  userId: string,
+  creditsToAward: number
+): Promise<AwardResult> {
+  // Get user's redeem wallet
+  const wallet = await prisma.redeemWallet.findUnique({
+    where: { userId },
+    select: { balance: true, limit: true, creditsWasted: true },
+  });
+
+  if (!wallet) {
+    return { awarded: 0, wasted: creditsToAward, newBalance: 0, limitReached: false };
+  }
+
+  const currentBalance = wallet.balance;
+  const walletLimit = wallet.limit;
+
+  // Calculate how many credits can actually be awarded
+  const spaceAvailable = Math.max(0, walletLimit - currentBalance);
+  const actualCredits = Math.min(creditsToAward, spaceAvailable);
+  const wastedCredits = creditsToAward - actualCredits;
+
+  // Update wallet if there are credits to award
+  if (actualCredits > 0 || wastedCredits > 0) {
+    await prisma.redeemWallet.update({
+      where: { userId },
+      data: {
+        balance: { increment: actualCredits },
+        creditsWasted: { increment: wastedCredits },
+      },
+    });
+  }
+
+  return {
+    awarded: actualCredits,
+    wasted: wastedCredits,
+    newBalance: currentBalance + actualCredits,
+    limitReached: spaceAvailable === 0 || actualCredits < creditsToAward,
+  };
 }
 
 // Calculate profile completion percentage based on filled fields
@@ -296,20 +346,37 @@ export async function PATCH(req: Request) {
       const bonusCredits = await getRedeemActionCredits("PROFILE_COMPLETION");
 
       if (bonusCredits > 0) {
-        await prisma.redeemWallet.update({
-          where: { userId: session.user.id },
-          data: {
-            balance: { increment: bonusCredits },
-          },
-        });
+        // Award credits with wallet limit enforcement
+        const result = await awardRedeemCredits(session.user.id, bonusCredits);
 
-        return NextResponse.json({
-          success: true,
-          profileId: finalProfile.id,
-          profileCompletion: completion,
-          message: `Profile complete! You earned ${bonusCredits} bonus credits.`,
-          bonusAwarded: true,
-        });
+        if (result.awarded > 0) {
+          // Build appropriate message based on whether limit was reached
+          let message = `Profile complete! You earned ${result.awarded} bonus credit${result.awarded !== 1 ? 's' : ''}.`;
+          if (result.wasted > 0) {
+            message += ` (${result.wasted} credit${result.wasted !== 1 ? 's' : ''} could not be added - wallet limit reached)`;
+          }
+
+          return NextResponse.json({
+            success: true,
+            profileId: finalProfile.id,
+            profileCompletion: completion,
+            message,
+            bonusAwarded: true,
+            creditsAwarded: result.awarded,
+            creditsWasted: result.wasted,
+            newBalance: result.newBalance,
+          });
+        } else if (result.limitReached) {
+          // No credits awarded because wallet is at limit
+          return NextResponse.json({
+            success: true,
+            profileId: finalProfile.id,
+            profileCompletion: completion,
+            message: "Profile complete! Bonus credits could not be added - your redeem wallet is at its limit.",
+            bonusAwarded: false,
+            creditsWasted: result.wasted,
+          });
+        }
       }
     }
 
