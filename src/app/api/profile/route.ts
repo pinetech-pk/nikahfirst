@@ -2,7 +2,18 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PROFILE_REWARDS } from "@/config/constants";
+// Helper function to get redeem action credits
+async function getRedeemActionCredits(slug: string): Promise<number> {
+  try {
+    const action = await prisma.redeemAction.findUnique({
+      where: { slug },
+      select: { creditsAwarded: true, isActive: true },
+    });
+    return action?.isActive ? action.creditsAwarded : 0;
+  } catch {
+    return 0; // Return 0 if RedeemAction table doesn't exist yet
+  }
+}
 
 // Calculate profile completion percentage based on filled fields
 function calculateCompletion(profile: Record<string, unknown>): number {
@@ -281,20 +292,25 @@ export async function PATCH(req: Request) {
 
     // Award bonus credits if profile is now complete (100%)
     if (completion === 100 && existingProfile.profileCompletion < 100) {
-      await prisma.redeemWallet.update({
-        where: { userId: session.user.id },
-        data: {
-          balance: { increment: PROFILE_REWARDS.COMPLETION_BONUS },
-        },
-      });
+      // Get configurable credits from RedeemAction
+      const bonusCredits = await getRedeemActionCredits("PROFILE_COMPLETION");
 
-      return NextResponse.json({
-        success: true,
-        profileId: finalProfile.id,
-        profileCompletion: completion,
-        message: `Profile complete! You earned ${PROFILE_REWARDS.COMPLETION_BONUS} bonus credits.`,
-        bonusAwarded: true,
-      });
+      if (bonusCredits > 0) {
+        await prisma.redeemWallet.update({
+          where: { userId: session.user.id },
+          data: {
+            balance: { increment: bonusCredits },
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          profileId: finalProfile.id,
+          profileCompletion: completion,
+          message: `Profile complete! You earned ${bonusCredits} bonus credits.`,
+          bonusAwarded: true,
+        });
+      }
     }
 
     return NextResponse.json({

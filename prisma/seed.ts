@@ -160,6 +160,32 @@ async function seedCreditActions() {
 }
 
 // ============================================================================
+// REDEEM ACTIONS
+// ============================================================================
+async function seedRedeemActions() {
+  console.log("🌱 Seeding redeem actions...");
+
+  const actions = [
+    { slug: "PROFILE_COMPLETION", name: "Profile Completion Bonus", description: "Bonus credits awarded when profile reaches 100% completion", category: "onboarding", creditsAwarded: 2, maxRedemptions: 1, cooldownDays: null, sortOrder: 0 },
+    { slug: "FIRST_PHOTO_UPLOAD", name: "First Photo Upload", description: "Credits for uploading your first profile photo", category: "onboarding", creditsAwarded: 1, maxRedemptions: 1, cooldownDays: null, sortOrder: 1 },
+    { slug: "REFERRAL_SUCCESS", name: "Successful Referral", description: "Credits when a referred user completes their profile", category: "referral", creditsAwarded: 5, maxRedemptions: null, cooldownDays: null, sortOrder: 2 },
+    { slug: "SOCIAL_SHARE", name: "Social Media Share", description: "Credits for sharing profile on social media", category: "engagement", creditsAwarded: 1, maxRedemptions: 5, cooldownDays: 7, sortOrder: 3 },
+    { slug: "DAILY_LOGIN", name: "Daily Login Bonus", description: "Credits for logging in daily", category: "engagement", creditsAwarded: 0, maxRedemptions: null, cooldownDays: 1, sortOrder: 4 },
+  ];
+
+  for (const action of actions) {
+    await prisma.redeemAction.upsert({
+      where: { slug: action.slug },
+      update: { ...action, isActive: true },
+      create: { ...action, isActive: true },
+    });
+    console.log(`  ✓ ${action.name} (+${action.creditsAwarded} credits)`);
+  }
+
+  console.log("✅ Redeem actions seeded successfully!");
+}
+
+// ============================================================================
 // CREDIT PACKAGES
 // ============================================================================
 async function seedCreditPackages() {
@@ -1372,6 +1398,7 @@ async function main() {
   // Already seeded successfully - uncomment if needed to re-run:
   // await seedSubscriptionPlans();
   // await seedCreditActions();
+  // await seedRedeemActions();
   // await seedCreditPackages();
   // await seedPaymentSettings();
   // await seedOriginsAndEthnicities();

@@ -43,6 +43,7 @@ import {
   Moon,
   Languages,
   Lightbulb,
+  Gift,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -126,6 +127,10 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
   "/admin/global-settings/credit-actions": {
     section: "Global Settings",
     page: "Credit Actions",
+  },
+  "/admin/global-settings/redeem-actions": {
+    section: "Global Settings",
+    page: "Redeem Actions",
   },
   "/admin/global-settings/credit-packages": {
     section: "Global Settings",
@@ -440,6 +445,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           name: "Credit Actions",
           href: "/admin/global-settings/credit-actions",
           icon: Coins,
+          badge: null,
+        },
+        {
+          name: "Redeem Actions",
+          href: "/admin/global-settings/redeem-actions",
+          icon: Gift,
           badge: null,
         },
         {
