@@ -16,6 +16,7 @@ model User {
   id                  String            @id @default(cuid())
   email               String            @unique
   phone               String?           @unique
+  phoneChangedAt      DateTime?         // Track when phone was last changed (30-day cooldown)
   password            String
   name                String?           // Contact person name
   isVerified          Boolean           @default(false)

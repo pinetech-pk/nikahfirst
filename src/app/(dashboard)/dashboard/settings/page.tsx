@@ -33,6 +33,7 @@ import {
   Phone,
   Clock,
   Send,
+  CalendarClock,
 } from "lucide-react";
 
 interface UserData {
@@ -42,6 +43,9 @@ interface UserData {
   phone: string | null;
   emailVerified: boolean;
   phoneVerified: boolean;
+  phoneChangedAt: string | null;
+  phoneCooldownDays: number;
+  phoneCooldownEndsAt: string | null;
 }
 
 interface PhoneVerificationData {
@@ -142,19 +146,43 @@ export default function SettingsPage() {
       if (response.ok) {
         setInfoMessage({
           type: "success",
-          text: "Personal information updated successfully!",
+          text: data.phoneChanged
+            ? "Account updated successfully. Phone verification required."
+            : "Personal information updated successfully!",
         });
         // Update local state with new data
         if (data.user) {
           setUserData((prev) => (prev ? { ...prev, ...data.user } : null));
         }
+        // Refresh phone verification status after phone change
+        if (data.phoneChanged) {
+          setPendingVerification(null);
+        }
+      } else if (response.status === 429 && data.cooldownRemaining) {
+        // Handle phone cooldown error
+        setInfoMessage({
+          type: "error",
+          text: data.error,
+        });
+        // Update local cooldown info
+        setUserData((prev) =>
+          prev
+            ? {
+                ...prev,
+                phoneCooldownDays: data.cooldownRemaining,
+                phoneCooldownEndsAt: data.cooldownEndsAt,
+              }
+            : null
+        );
+        // Reset phone to current value
+        setPhone(userData?.phone as E164Number | undefined);
       } else {
         setInfoMessage({
           type: "error",
           text: data.error || "Failed to update information",
         });
       }
-    } catch (error) {
+    } catch {
       setInfoMessage({
         type: "error",
         text: "An error occurred. Please try again.",
@@ -448,6 +476,22 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500">
                     Add a phone number for account recovery and verification
                   </p>
+                )}
+                {/* Phone change cooldown notice */}
+                {userData && userData.phoneCooldownDays > 0 && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                    <CalendarClock className="h-4 w-4 mt-0.5 shrink-0" />
+                    <div className="text-xs">
+                      <p className="font-medium">Phone number change restricted</p>
+                      <p className="mt-0.5">
+                        You can change your phone number again in{" "}
+                        <strong>{userData.phoneCooldownDays} day{userData.phoneCooldownDays > 1 ? "s" : ""}</strong>
+                        {userData.phoneCooldownEndsAt && (
+                          <> (on {new Date(userData.phoneCooldownEndsAt).toLocaleDateString()})</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
                 )}
                 <p className="text-xs text-gray-500">
                   Stored in international format (e.g., +923001234567)
