@@ -166,7 +166,7 @@ async function seedRedeemActions() {
   console.log("🌱 Seeding redeem actions...");
 
   const actions = [
-    { slug: "PROFILE_COMPLETION", name: "Profile Completion Bonus", description: "Bonus credits awarded when profile reaches 100% completion", category: "onboarding", creditsAwarded: 2, maxRedemptions: 1, cooldownDays: null, sortOrder: 0 },
+    { slug: "PROFILE_COMPLETION", name: "Profile Completion Bonus", description: "Bonus credits awarded when profile reaches 100% completion", category: "onboarding", creditsAwarded: 1, maxRedemptions: 1, cooldownDays: null, sortOrder: 0 },
     { slug: "FIRST_PHOTO_UPLOAD", name: "First Photo Upload", description: "Credits for uploading your first profile photo", category: "onboarding", creditsAwarded: 1, maxRedemptions: 1, cooldownDays: null, sortOrder: 1 },
     { slug: "REFERRAL_SUCCESS", name: "Successful Referral", description: "Credits when a referred user completes their profile", category: "referral", creditsAwarded: 5, maxRedemptions: null, cooldownDays: null, sortOrder: 2 },
     { slug: "SOCIAL_SHARE", name: "Social Media Share", description: "Credits for sharing profile on social media", category: "engagement", creditsAwarded: 1, maxRedemptions: 5, cooldownDays: 7, sortOrder: 3 },
