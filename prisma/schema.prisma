@@ -138,6 +138,34 @@ model CreditAction {
 }
 
 // ============================================================================
+// SECTION 1C-B: REDEEM ACTIONS (Global Settings - Credit Rewards)
+// ============================================================================
+
+model RedeemAction {
+  id                  String            @id @default(cuid())
+
+  // Action Identity
+  slug                String            @unique  // PROFILE_CREATION, REFERRAL_SUCCESS, SOCIAL_SHARE, etc.
+  name                String            // Display name
+  description         String?           @db.Text
+  category            String?           // "onboarding", "engagement", "referral", "promotion"
+
+  // Reward Configuration
+  creditsAwarded      Int               @default(1)   // Credits given for this action
+  maxRedemptions      Int?              // Max times user can earn from this action (null = unlimited)
+  cooldownDays        Int?              // Days before user can earn again (null = no cooldown)
+
+  // Status & Display
+  isActive            Boolean           @default(true)
+  sortOrder           Int               @default(0)
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("redeem_actions")
+}
+
+// ============================================================================
 // SECTION 1D: CREDIT PACKAGES (Global Settings - TopUp Plans)
 // ============================================================================
 
