@@ -259,6 +259,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       return { section: "Profile Management", page: "Profile Details" };
     }
 
+    // Transaction routes: /admin/financial/transactions/[id]
+    if (pathname.match(/^\/admin\/financial\/transactions\/[^/]+$/)) {
+      return { section: "Financial", page: "Transaction Details" };
+    }
+
     // Default fallback
     return { section: "Dashboard", page: "Overview" };
   }, [pathname]);
