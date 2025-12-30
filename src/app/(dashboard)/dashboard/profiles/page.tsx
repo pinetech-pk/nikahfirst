@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   User,
   UserPlus,
@@ -20,6 +21,8 @@ import {
   Edit,
   Eye,
   AlertCircle,
+  Info,
+  Crown,
 } from "lucide-react";
 
 // Minimum completion percentage to be considered "complete enough" for review
@@ -32,6 +35,23 @@ export default async function ProfileManagementPage() {
     redirect("/login");
   }
 
+  // Get user's subscription plan to check profile limit
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      subscriptionPlan: {
+        select: {
+          name: true,
+          profileLimit: true,
+        },
+      },
+    },
+  });
+
+  // Get profile limit from subscription plan (default to 1 for free users)
+  const profileLimit = user?.subscriptionPlan?.profileLimit ?? 1;
+  const planName = user?.subscriptionPlan?.name ?? "Free";
+
   // Fetch all profiles with location data
   const profiles = await prisma.profile.findMany({
     where: { userId: session.user.id },
@@ -42,6 +62,9 @@ export default async function ProfileManagementPage() {
     },
     orderBy: { createdAt: "desc" },
   });
+
+  // Check if profile limit reached
+  const hasReachedProfileLimit = profiles.length >= profileLimit;
 
   // Helper to get profile status info
   const getProfileStatus = (profile: typeof profiles[number]) => {
@@ -81,8 +104,28 @@ export default async function ProfileManagementPage() {
         </p>
       </div>
 
-      {/* Create New Profile Card - only show if no profiles exist */}
-      {profiles.length === 0 && (
+      {/* Profile Limit Reached Alert */}
+      {hasReachedProfileLimit && profiles.length > 0 && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-5 w-5 text-blue-600" />
+          <AlertTitle className="text-blue-800 font-semibold">
+            Profile Limit Reached
+          </AlertTitle>
+          <AlertDescription className="text-blue-700">
+            You have reached the maximum number of profiles ({profileLimit}) allowed under your <strong>{planName}</strong> plan.
+            To create additional profiles, please upgrade your subscription.
+          </AlertDescription>
+          <Link href="/dashboard/subscription" className="inline-block mt-3">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Crown className="h-4 w-4 mr-2" />
+              Upgrade Plan
+            </Button>
+          </Link>
+        </Alert>
+      )}
+
+      {/* Create New Profile Card - only show if under profile limit */}
+      {!hasReachedProfileLimit && profiles.length === 0 && (
         <Link href="/profile/create">
           <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-green-400">
             <CardContent className="p-6 flex items-center justify-center gap-4">
@@ -219,12 +262,14 @@ export default async function ProfileManagementPage() {
             <p className="text-gray-500 mb-4">
               Create your first matrimonial profile to get started
             </p>
-            <Link href="/profile/create">
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Create Profile
-              </Button>
-            </Link>
+            {!hasReachedProfileLimit && (
+              <Link href="/profile/create">
+                <Button>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Create Profile
+                </Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       )}

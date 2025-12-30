@@ -11,8 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowLeft, AlertTriangle, Crown } from "lucide-react";
 import {
   StepBasicInfo,
   StepOrigin,
@@ -40,6 +41,11 @@ export default function CreateProfilePage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
+  // Profile limit check
+  const [checkingLimit, setCheckingLimit] = useState(true);
+  const [limitReached, setLimitReached] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ planName: string; limit: number } | null>(null);
+
   // Lookup data states
   const [origins, setOrigins] = useState<LookupItem[]>([]);
   const [ethnicities, setEthnicities] = useState<LookupItem[]>([]);
@@ -54,6 +60,30 @@ export default function CreateProfilePage() {
   const [educationFields, setEducationFields] = useState<LookupItem[]>([]);
   const [incomeRanges, setIncomeRanges] = useState<LookupItem[]>([]);
   const [languages, setLanguages] = useState<LookupItem[]>([]);
+
+  // Check profile limit on mount
+  useEffect(() => {
+    const checkProfileLimit = async () => {
+      try {
+        const res = await fetch("/api/user/profile-limit");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.limitReached) {
+            setLimitReached(true);
+            setLimitInfo({
+              planName: data.planName,
+              limit: data.profileLimit,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to check profile limit:", error);
+      } finally {
+        setCheckingLimit(false);
+      }
+    };
+    checkProfileLimit();
+  }, []);
 
   // Fetch lookup data
   const fetchLookup = useCallback(async (table: string, parentId?: string) => {
@@ -504,6 +534,64 @@ export default function CreateProfilePage() {
       default: return false;
     }
   };
+
+  // Show loading state while checking profile limit
+  if (checkingLimit) {
+    return (
+      <div className="container mx-auto max-w-3xl py-10 px-4">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show limit reached message
+  if (limitReached && limitInfo) {
+    return (
+      <div className="container mx-auto max-w-3xl py-10 px-4">
+        <div className="mb-4">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Back to Dashboard
+          </Link>
+        </div>
+
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
+                <AlertTriangle className="h-8 w-8 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Profile Limit Reached
+              </h2>
+              <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                You have reached the maximum number of profiles ({limitInfo.limit}) allowed under your <strong>{limitInfo.planName}</strong> plan.
+                To create additional profiles, please upgrade your subscription.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link href="/dashboard/subscription">
+                  <Button className="bg-green-600 hover:bg-green-700">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Upgrade Plan
+                  </Button>
+                </Link>
+                <Link href="/dashboard/profiles">
+                  <Button variant="outline">
+                    Manage Existing Profiles
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-3xl py-10 px-4">
