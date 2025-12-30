@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -121,7 +121,7 @@ const STATUS_BADGES: Record<string, { label: string; className: string }> = {
   BANNED: { label: "Banned", className: "bg-gray-800 text-white" },
 };
 
-export default function ProfilesPage() {
+function ProfilesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -599,5 +599,19 @@ export default function ProfilesPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ProfilesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+        </div>
+      }
+    >
+      <ProfilesPageContent />
+    </Suspense>
   );
 }
