@@ -14,7 +14,7 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const status = searchParams.get("status") as ModerationStatus | null;
+    const statusParam = searchParams.get("status"); // Keep as string to handle "all"
     const sort = searchParams.get("sort") || "oldest"; // oldest, newest, completeness
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
@@ -28,9 +28,9 @@ export async function GET(req: Request) {
     // Build where clause
     const where: Record<string, unknown> = {};
 
-    // Status filter (skip if "all")
-    if (status && status !== "all") {
-      where.moderationStatus = status;
+    // Status filter (skip if "all" or not provided)
+    if (statusParam && statusParam !== "all") {
+      where.moderationStatus = statusParam as ModerationStatus;
     }
 
     // Gender filter
