@@ -133,11 +133,21 @@ export async function PATCH(
       status: body.status as UserStatus,
     };
 
+    // Get current user data to check if subscription is actually changing
+    const currentUser = await prisma.user.findUnique({
+      where: { id },
+      select: { subscription: true },
+    });
+
     // Handle subscription plan change - this is the key part
     // Accept either subscriptionPlanId or subscription (slug) for backwards compatibility
     const subscriptionSlug = body.subscriptionPlanId || body.subscription;
 
-    if (subscriptionSlug) {
+    // Only process subscription change if it's actually different from current
+    const isSubscriptionChanging = subscriptionSlug && currentUser?.subscription !== subscriptionSlug;
+
+    // Only update subscription-related fields if subscription is actually changing
+    if (isSubscriptionChanging) {
       // Fetch the subscription plan by slug
       const plan = await prisma.subscriptionPlan.findUnique({
         where: { slug: subscriptionSlug },
@@ -212,8 +222,8 @@ export async function PATCH(
         },
       });
 
-      // If subscription changed, also update the RedeemWallet
-      if (subscriptionSlug) {
+      // If subscription actually changed, also update the RedeemWallet
+      if (isSubscriptionChanging) {
         const plan = await tx.subscriptionPlan.findUnique({
           where: { slug: subscriptionSlug },
         });
@@ -255,7 +265,7 @@ export async function PATCH(
       success: true,
       message: body.newPassword
         ? "User updated successfully (password changed)"
-        : subscriptionSlug
+        : isSubscriptionChanging
         ? "User updated successfully (subscription plan and benefits updated)"
         : "User updated successfully",
       user: updatedUser,
