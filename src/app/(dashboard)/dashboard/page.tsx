@@ -37,7 +37,7 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Get user data with subscription plan
+  // Get user data with subscription plan including profile limit
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
@@ -48,12 +48,16 @@ export default async function DashboardPage() {
         select: {
           name: true,
           slug: true,
+          profileLimit: true,
         },
       },
       tierRedeemCredits: true,
       tierRedeemCycleDays: true,
     },
   });
+
+  // Get profile limit from subscription plan (default to 1 for free users)
+  const profileLimit = user?.subscriptionPlan?.profileLimit ?? 1;
 
   // Check if user has any profiles with detailed stats
   const profiles = await prisma.profile.findMany({
@@ -73,6 +77,7 @@ export default async function DashboardPage() {
 
   // Calculate profile stats
   type ProfileType = typeof profiles[number];
+  const hasReachedProfileLimit = profiles.length >= profileLimit;
   const activeProfiles = profiles.filter((p: ProfileType) => p.isActive && p.isPublished).length;
   const verifiedProfiles = profiles.filter((p: ProfileType) => p.isVerified).length;
   const pendingProfiles = profiles.filter((p: ProfileType) => !p.isPublished).length;
@@ -294,15 +299,17 @@ export default async function DashboardPage() {
         <h2 className="text-lg font-semibold text-gray-800 mb-4">Manage Profiles</h2>
         <div className="border-b border-gray-200 mb-6" />
 
-        {/* Create New Profile Card */}
-        <Link href="/profile/create">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer mb-6 border-dashed border-2 hover:border-gray-400">
-            <CardContent className="p-8 flex items-center justify-center gap-4">
-              <UserPlus className="h-10 w-10 text-gray-400" />
-              <span className="text-xl font-semibold text-gray-700">Create New Rishta Profile</span>
-            </CardContent>
-          </Card>
-        </Link>
+        {/* Create New Profile Card - Only show if under profile limit */}
+        {!hasReachedProfileLimit && (
+          <Link href="/profile/create">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer mb-6 border-dashed border-2 hover:border-gray-400">
+              <CardContent className="p-8 flex items-center justify-center gap-4">
+                <UserPlus className="h-10 w-10 text-gray-400" />
+                <span className="text-xl font-semibold text-gray-700">Create New Rishta Profile</span>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
 
         {/* Profile Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
