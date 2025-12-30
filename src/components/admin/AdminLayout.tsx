@@ -76,21 +76,13 @@ const BREADCRUMB_MAP: Record<string, { section: string; page: string }> = {
     section: "User Management",
     page: "User Verification",
   },
+  "/admin/profiles": {
+    section: "Profile Management",
+    page: "All Profiles",
+  },
   "/admin/profiles/pending": {
     section: "Profile Management",
     page: "Pending Approval",
-  },
-  "/admin/profiles/approved": {
-    section: "Profile Management",
-    page: "Approved Profiles",
-  },
-  "/admin/profiles/rejected": {
-    section: "Profile Management",
-    page: "Rejected Profiles",
-  },
-  "/admin/profiles/verified": {
-    section: "Profile Management",
-    page: "Verified Profiles",
   },
   "/admin/financial/subscriptions": {
     section: "Financial",
@@ -322,6 +314,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       title: "Profile Management",
       items: [
         {
+          name: "All Profiles",
+          href: "/admin/profiles",
+          icon: Users,
+          badge: null,
+        },
+        {
           name: "Pending Approval",
           href: "/admin/profiles/pending",
           icon: Clock,
@@ -330,19 +328,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         },
         {
           name: "Approved Profiles",
-          href: "/admin/profiles/approved",
+          href: "/admin/profiles?status=APPROVED",
           icon: CheckCircle,
           badge: null,
         },
         {
           name: "Rejected Profiles",
-          href: "/admin/profiles/rejected",
+          href: "/admin/profiles?status=REJECTED",
           icon: XCircle,
           badge: null,
         },
         {
           name: "Verified Profiles",
-          href: "/admin/profiles/verified",
+          href: "/admin/profiles?status=verified",
           icon: Star,
           badge: null,
         },
