@@ -141,7 +141,7 @@ export async function GET(req: Request) {
     ]);
 
     // Get counts by status for stats
-    const [pendingCount, approvedCount, rejectedCount, bannedCount, verifiedCount, totalCount] =
+    const [pendingCount, approvedCount, rejectedCount, bannedCount, verifiedCount, allProfilesCount] =
       await Promise.all([
         prisma.profile.count({ where: { moderationStatus: "PENDING" } }),
         prisma.profile.count({ where: { moderationStatus: "APPROVED" } }),
@@ -186,7 +186,7 @@ export async function GET(req: Request) {
         totalPages: Math.ceil(totalCount / limit),
       },
       counts: {
-        total: totalCount,
+        total: allProfilesCount,
         pending: pendingCount,
         approved: approvedCount,
         rejected: rejectedCount,
