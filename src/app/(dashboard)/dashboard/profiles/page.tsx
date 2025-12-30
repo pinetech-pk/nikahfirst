@@ -19,7 +19,11 @@ import {
   MapPin,
   Edit,
   Eye,
+  AlertCircle,
 } from "lucide-react";
+
+// Minimum completion percentage to be considered "complete enough" for review
+const MIN_COMPLETION_FOR_REVIEW = 80;
 
 export default async function ProfileManagementPage() {
   const session = await getServerSession(authOptions);
@@ -39,6 +43,34 @@ export default async function ProfileManagementPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Helper to get profile status info
+  const getProfileStatus = (profile: typeof profiles[number]) => {
+    // If profile is approved/published
+    if (profile.isPublished) {
+      return {
+        label: "Approved",
+        color: "bg-blue-100 text-blue-700",
+        icon: BadgeCheck,
+      };
+    }
+
+    // If profile completion is below threshold, show as incomplete
+    if (profile.profileCompletion < MIN_COMPLETION_FOR_REVIEW) {
+      return {
+        label: "Incomplete",
+        color: "bg-orange-100 text-orange-700",
+        icon: AlertCircle,
+      };
+    }
+
+    // Profile is complete but awaiting review
+    return {
+      label: "Pending Approval",
+      color: "bg-yellow-100 text-yellow-700",
+      icon: Clock,
+    };
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -49,17 +81,19 @@ export default async function ProfileManagementPage() {
         </p>
       </div>
 
-      {/* Create New Profile Card */}
-      <Link href="/profile/create">
-        <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-green-400">
-          <CardContent className="p-6 flex items-center justify-center gap-4">
-            <UserPlus className="h-8 w-8 text-green-600" />
-            <span className="text-lg font-semibold text-gray-700">
-              Create New Rishta Profile
-            </span>
-          </CardContent>
-        </Card>
-      </Link>
+      {/* Create New Profile Card - only show if no profiles exist */}
+      {profiles.length === 0 && (
+        <Link href="/profile/create">
+          <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed border-2 hover:border-green-400">
+            <CardContent className="p-6 flex items-center justify-center gap-4">
+              <UserPlus className="h-8 w-8 text-green-600" />
+              <span className="text-lg font-semibold text-gray-700">
+                Create New Rishta Profile
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Profiles List */}
       {profiles.length > 0 ? (
@@ -92,6 +126,11 @@ export default async function ProfileManagementPage() {
                 if (profile.countryLivingIn?.name) locationParts.push(profile.countryLivingIn.name);
                 const locationString = locationParts.join(", ") || "Location not set";
 
+                // Get profile status
+                const status = getProfileStatus(profile);
+                const StatusIcon = status.icon;
+                const isIncomplete = profile.profileCompletion < MIN_COMPLETION_FOR_REVIEW;
+
                 return (
                   <div
                     key={profile.id}
@@ -116,6 +155,12 @@ export default async function ProfileManagementPage() {
                           <MapPin className="h-3 w-3" />
                           {locationString}
                         </p>
+                        {/* Show completion percentage for incomplete profiles */}
+                        {isIncomplete && (
+                          <p className="text-xs text-orange-600 mt-1">
+                            {profile.profileCompletion}% complete - Please complete your profile
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -128,31 +173,35 @@ export default async function ProfileManagementPage() {
                           Verified
                         </span>
                       )}
-                      {profile.isPublished ? (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          <BadgeCheck className="h-3 w-3 mr-1" />
-                          Approved
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Pending Approval
-                        </span>
-                      )}
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                        <StatusIcon className="h-3 w-3 mr-1" />
+                        {status.label}
+                      </span>
 
-                      {/* Action Buttons */}
-                      <Link href={`/dashboard/profile/${profile.id}/edit`}>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                      </Link>
-                      <Link href={`/dashboard/profile/${profile.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </Link>
+                      {/* Action Buttons - Show "Complete Profile" for incomplete, "Edit" otherwise */}
+                      {isIncomplete ? (
+                        <Link href={`/dashboard/profile/${profile.id}/edit`}>
+                          <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Complete Profile
+                          </Button>
+                        </Link>
+                      ) : (
+                        <>
+                          <Link href={`/dashboard/profile/${profile.id}/edit`}>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </Link>
+                          <Link href={`/dashboard/profile/${profile.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Profile
+                            </Button>
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
