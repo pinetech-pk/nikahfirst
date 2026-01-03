@@ -50,6 +50,7 @@ import {
   AlertTriangle,
   Eye,
   EyeOff,
+  Pencil,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 
@@ -414,11 +415,17 @@ export default function ProfileReviewPage({
 
           {/* Location */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
                 Location
               </CardTitle>
+              <Link href={`/admin/profiles/${profile.id}/edit`}>
+                <Button variant="outline" size="sm">
+                  <Pencil className="h-4 w-4 mr-1" />
+                  Edit Location
+                </Button>
+              </Link>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
