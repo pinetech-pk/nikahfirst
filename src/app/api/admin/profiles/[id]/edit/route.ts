@@ -9,7 +9,7 @@ interface RouteParams {
   }>;
 }
 
-// PATCH - Admin update profile (primarily for location mapping)
+// PATCH - Admin update profile (for mapping suggested values to database entries)
 export async function PATCH(req: Request, { params }: RouteParams) {
   try {
     const session = await getServerSession(authOptions);
@@ -37,26 +37,56 @@ export async function PATCH(req: Request, { params }: RouteParams) {
     const updateData: Record<string, unknown> = {};
 
     // Location fields
+    if (data.countryOfOriginId !== undefined) {
+      updateData.countryOfOriginId = data.countryOfOriginId || null;
+    }
+    if (data.countryLivingInId !== undefined) {
+      updateData.countryLivingInId = data.countryLivingInId || null;
+    }
     if (data.stateProvinceId !== undefined) {
       updateData.stateProvinceId = data.stateProvinceId || null;
     }
     if (data.cityId !== undefined) {
       updateData.cityId = data.cityId || null;
     }
-    if (data.suggestedLocation !== undefined) {
-      // Clear suggested location when admin maps to actual location
-      updateData.suggestedLocation = data.suggestedLocation || null;
-    }
     if (data.visaStatus !== undefined) {
       updateData.visaStatus = data.visaStatus || null;
     }
-
-    // Country fields (in case they need adjustment)
-    if (data.countryOfOriginId !== undefined) {
-      updateData.countryOfOriginId = data.countryOfOriginId || null;
+    if (data.suggestedLocation !== undefined) {
+      updateData.suggestedLocation = data.suggestedLocation || null;
     }
-    if (data.countryLivingInId !== undefined) {
-      updateData.countryLivingInId = data.countryLivingInId || null;
+
+    // Origin & Background fields
+    if (data.originId !== undefined) {
+      updateData.originId = data.originId || null;
+    }
+    if (data.ethnicityId !== undefined) {
+      updateData.ethnicityId = data.ethnicityId || null;
+    }
+    if (data.casteId !== undefined) {
+      updateData.casteId = data.casteId || null;
+    }
+    if (data.customCaste !== undefined) {
+      updateData.customCaste = data.customCaste || null;
+    }
+
+    // Education fields
+    if (data.educationLevelId !== undefined) {
+      updateData.educationLevelId = data.educationLevelId || null;
+    }
+    if (data.educationFieldId !== undefined) {
+      updateData.educationFieldId = data.educationFieldId || null;
+    }
+    if (data.educationDetails !== undefined) {
+      updateData.educationDetails = data.educationDetails || null;
+    }
+
+    // Language fields
+    if (data.motherTongueId !== undefined) {
+      updateData.motherTongueId = data.motherTongueId || null;
+    }
+    if (data.otherMotherTongue !== undefined) {
+      updateData.otherMotherTongue = data.otherMotherTongue || null;
     }
 
     // Update the profile
@@ -68,6 +98,12 @@ export async function PATCH(req: Request, { params }: RouteParams) {
         countryLivingIn: { select: { id: true, name: true } },
         stateProvince: { select: { id: true, name: true } },
         city: { select: { id: true, name: true } },
+        origin: { select: { id: true, label: true } },
+        ethnicity: { select: { id: true, label: true } },
+        caste: { select: { id: true, label: true } },
+        educationLevel: { select: { id: true, label: true } },
+        educationField: { select: { id: true, label: true } },
+        motherTongue: { select: { id: true, label: true } },
       },
     });
 
