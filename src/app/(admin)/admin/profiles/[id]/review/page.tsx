@@ -92,6 +92,7 @@ interface Profile {
   stateProvince: { id: string; name: string } | null;
   city: { id: string; name: string } | null;
   visaStatus: string | null;
+  suggestedLocation: string | null;
   // Origin & Ethnicity
   origin: { id: string; label: string } | null;
   ethnicity: { id: string; label: string } | null;
@@ -441,6 +442,18 @@ export default function ProfileReviewPage({
                   <div>
                     <p className="text-sm font-medium text-gray-500">Visa Status</p>
                     <p className="font-medium">{formatEnumValue(profile.visaStatus)}</p>
+                  </div>
+                )}
+                {profile.suggestedLocation && (
+                  <div className="col-span-2 md:col-span-3 mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                    <p className="text-sm font-medium text-amber-700 flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Suggested Location (Pending Review)
+                    </p>
+                    <p className="font-medium text-amber-900 mt-1">{profile.suggestedLocation}</p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      User couldn&apos;t find their location in the system. Please add the state/city to the database if valid.
+                    </p>
                   </div>
                 )}
               </div>
