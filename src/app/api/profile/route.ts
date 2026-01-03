@@ -269,6 +269,42 @@ export async function PATCH(req: Request) {
     if (updateData.stateProvinceId !== undefined) prismaUpdateData.stateProvinceId = updateData.stateProvinceId || null;
     if (updateData.cityId !== undefined) prismaUpdateData.cityId = updateData.cityId || null;
     if (updateData.visaStatus !== undefined) prismaUpdateData.visaStatus = updateData.visaStatus || null;
+    if (updateData.suggestedLocation !== undefined) prismaUpdateData.suggestedLocation = updateData.suggestedLocation || null;
+
+    // Create suggestion for location if user couldn't find their state/city
+    if (updateData.suggestedLocation && updateData.suggestedLocation.trim()) {
+      // Check if suggestion already exists from this user
+      const existingLocationSuggestion = await prisma.fieldSuggestion.findFirst({
+        where: {
+          userId: session.user.id,
+          fieldType: "CITY",
+          suggestedValue: updateData.suggestedLocation.trim(),
+        },
+      });
+
+      if (!existingLocationSuggestion) {
+        // Get country name for additional context
+        let countryName = "";
+        if (updateData.countryLivingInId) {
+          const country = await prisma.country.findUnique({
+            where: { id: updateData.countryLivingInId },
+            select: { name: true },
+          });
+          countryName = country?.name || "";
+        }
+
+        await prisma.fieldSuggestion.create({
+          data: {
+            userId: session.user.id,
+            fieldType: "CITY",
+            suggestedValue: updateData.suggestedLocation.trim(),
+            suggestedLabel: updateData.suggestedLocation.trim(),
+            additionalInfo: countryName ? `Country: ${countryName}` : null,
+            status: "PENDING",
+          },
+        });
+      }
+    }
 
     // Step 4: Religion & Family
     if (updateData.sectId !== undefined) prismaUpdateData.sectId = updateData.sectId || null;
