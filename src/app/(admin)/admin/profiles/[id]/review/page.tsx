@@ -423,7 +423,7 @@ export default function ProfileReviewPage({
               <Link href={`/admin/profiles/${profile.id}/edit`}>
                 <Button variant="outline" size="sm">
                   <Pencil className="h-4 w-4 mr-1" />
-                  Edit Location
+                  Edit Profile
                 </Button>
               </Link>
             </CardHeader>
